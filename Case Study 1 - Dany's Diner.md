@@ -422,7 +422,3 @@ ORDER BY customer_id,
         + interval '1 month' -- Adding one month to 2021-01-01 gives 2021-02-01
         - interval '1 day' AS last_date	-- Subtracting one day from 2021-02-01 gives 2021-01-31, which is the last day of January.
 	
-
-## Data Source & Inspiration
-- [Danny's Diner](https://8weeksqlchallenge.com/case-study-1/)
-- [Katie Huang](https://github.com/katiehuangx) - GitHub Project inspiration
