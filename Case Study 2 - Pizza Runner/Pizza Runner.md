@@ -20,7 +20,7 @@ Our task will be to clean this data and apply some basic calculations so Dany ca
 # ERD Diagram
 ![Pizza Runner](https://github.com/katiehuangx/8-Week-SQL-Challenge/assets/81607668/78099a4e-4d0e-421f-a560-b72e4321f530)
 
-## #New Learning - Creating ERD Diagram directly in Postgres
+## ERD Diagram directly in Postgres
 ![Pizza Runner ERD](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/1a547c32e85ca4044aefe22e3f7afde0c5d9f605/ref_images/Pizza_Runner_ERD.pgerd.png)
 
 ## Data Cleaning and Transformation
@@ -80,11 +80,80 @@ SELECT order_id,
 			 WHEN duration LIKE '%minutes' THEN TRIM('minutes' FROM duration)
 			 ELSE duration
 			 END AS duration,
-		CASE WHEN cancellation IS NULL OR cancellation LIKE 'null' THEN ' '
+		CASE WHEN cancellation IS NULL OR cancellation = '' OR cancellation LIKE 'null' THEN ' '
 			 ELSE cancellation
 			 END AS cancellation
 FROM pizza_runner.runner_orders
 ````
+Correct the data type in running_orders_temp table - unable to get the correct output so I updated the datatypes from within the PGAdmin* iteself to:
+- `pickup_time` - `timestamp without time zone`
+- 'distance1` - `double precision`
+- `duration` - `integer`
+
+*took ChatGPTs help for this
+
+Below is the SQL Code though that alters the datatypes in the table:
+````sql
+ALTER TABLE running_orders_temp 
+ALTER COLUMN pickup_time DATETIME,
+ALTER COLUMN distance FLOAT,
+ALTER COLUMN duration INT
+````
+***
+
+## Questions with Solutions
+## A. Pizza Metrics
+
+### 1. How many pizzas were ordered?
+SELECT COUNT(*) AS total_pizzas
+FROM customer_orders_temp
+
+| pizzas |
+ -----------  |
+| 14        | 
+
+### 2. How many unique customer orders were made?
+SELECT COUNT(DISTINCT(order_id))
+FROM customer_orders_temp
+
+#### Solution:
+| successful_orders |
+ -----------  |
+| 10         | 
+
+
+### 3. How many successful orders were delivered by each runner?
+SELECT runner_id,
+		COUNT(*) AS successful_orders
+FROM runner_orders_temp 
+WHERE cancellation = ' '
+GROUP BY runner_orders_temp.runner_id
+
+#### Solution:
+| runner_id | successful_orders |
+| ----------- | -----------  |
+| 1          | 4           |
+| 2          | 3          |
+| 3          | 1           |
+
+### 4. How many of each type of pizza was delivered?
+
+````sql
+SELECT 	pizza_names.pizza_id,
+		COUNT(customer_orders_temp.order_id) AS total_pizzas
+FROM pizza_runner.pizza_names
+JOIN customer_orders_temp ON pizza_names.pizza_id = customer_orders_temp.pizza_id
+JOIN runner_orders_temp ON customer_orders_temp.order_id = runner_orders_temp.order_id
+WHERE cancellation = ' '
+GROUP BY pizza_names.pizza_id
+````
+
+#### Solution:
+| pizza_id | total_pizzas |
+| ----------- | -----------  |
+| 1          | 9          |
+| 2          | 3          |
+
 
 ***
 ### Learnings
