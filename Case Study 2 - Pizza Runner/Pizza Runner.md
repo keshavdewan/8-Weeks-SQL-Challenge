@@ -154,6 +154,30 @@ GROUP BY pizza_names.pizza_id
 | 1          | 9          |
 | 2          | 3          |
 
+### 5. How many Vegetarian and Meatlovers were ordered by each customer?**
+
+````sql
+SELECT 	pizza_names.pizza_name,
+		customer_orders_temp.customer_id AS customers,
+		COUNT(customer_orders_temp.order_id) AS total_pizzas
+FROM pizza_runner.pizza_names
+JOIN customer_orders_temp ON pizza_names.pizza_id = customer_orders_temp.pizza_id
+JOIN runner_orders_temp ON customer_orders_temp.order_id = runner_orders_temp.order_id
+WHERE cancellation = ' '
+GROUP BY pizza_names.pizza_name,customers
+ORDER  BY total_pizzas DESC
+````
+#### Solution:
+| pizza_name | customers | total_pizzas |
+| ----------- | -----------  |----  |
+| Meatlovers  | 104         |  3   |
+| Meatlovers  | 101         |   2  |
+| Meatlovers  | 103         |   2  |
+| Meatlovers  | 102         |   2  |
+| Vegetarian  | 103         |   1  |
+| Vegetarian  | 102         |    1 |
+| Vegetarian  | 105         |    1 |
+
 
 ***
 ### Learnings
