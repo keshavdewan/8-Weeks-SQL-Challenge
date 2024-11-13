@@ -19,5 +19,12 @@ Our task will be to clean this data and apply some basic calculations so Dany ca
 # ERD Diagram
 ![Pizza Runner](https://github.com/katiehuangx/8-Week-SQL-Challenge/assets/81607668/78099a4e-4d0e-421f-a560-b72e4321f530)
 
+## #New Learning - Creating ERD Diagram directly in Postgres
+![Pizza Runner ERD](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/1a547c32e85ca4044aefe22e3f7afde0c5d9f605/ref_images/Pizza_Runner_ERD.pgerd.png)
+
 ## Data Cleaning and Transformation
+### 1. Table: customer_orders
+![customer_orders]()
+In the table `customer_orders`, we  have `null` or `missing` values in `exclusions` and `extras` column. So we need to  remove these null values and replace them
+with `blank` space
 
