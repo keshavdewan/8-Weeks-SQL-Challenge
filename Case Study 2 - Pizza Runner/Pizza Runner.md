@@ -12,7 +12,7 @@ The case study has been divided into different question categories that includes
   - [C. Ingredient Optimisation](#c-ingredient-optimisation)
   - [D. Pricing and Ratings](#d-pricing-and-ratings)
   - [E. Bonus Data Manipulation Challenge] (#e-bonus-data-manipulation-challenge)
-  - [Learnings](#-Learnings)
+  - [Learnings](Learnings)
 
 # Task
 Our task will be to clean this data and apply some basic calculations so Dany can better direct his runners and optimise Pizza Runner’s operations.
