@@ -296,7 +296,23 @@ ORDER BY
 | Friday         |   1  |
 |  Saturday      |   5  |
 
+***
+## B. Runner and Customer Experience
+### 1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
 
+````sql
+SELECT COUNT(runner_id) AS runner_signup,
+       DATE '2021-01-01' + ((DATE_PART('day', AGE(registration_date, DATE '2021-01-01')) / 7)::int * 7) AS signup_period
+FROM pizza_runner.runners
+GROUP BY signup_period
+ORDER BY signup_period
+````
+#### Solution:
+| runner_signup | signup_period| 
+| ----------- | -----------  |
+| 2        |  2021-01-01  |
+| 1        |   2021-01-08  |
+| 1         |   2021-01-15  |
 ***
 ### Learnings
 ##### 1. Creating ERD Diagram in Postgre SQL itself
