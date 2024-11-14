@@ -46,17 +46,17 @@ with `blank` space. This will be done by:
   	  WHEN extras IS NULL or extras LIKE 'null' THEN ' '
   	  ELSE extras
   	  END AS extras,
-  	order_time
+  	order_date
   FROM pizza_runner.customer_orders
 ````
 
-`customer_orders_temp`: <img width="1058" alt="image" src="https://user-images.githubusercontent.com/81607668/129472551-fe3d90a0-1e8b-4f32-a2a7-2ecd3ac469ef.png">
+
 
 ***
 
 ### 2. Table: runner_orders
 This table requires more cleaning work then the previous table:
-- create a temporary table
+- create a temporary table - `runner_orders_temp`
 - remove `null`/blank spaces from different columns
 - from column `distance` remove ' km' or 'km'
 - from column `duration` remove 'mins' or 'minutes'
@@ -64,7 +64,7 @@ This table requires more cleaning work then the previous table:
 <img width="1037" alt="image" src="https://user-images.githubusercontent.com/81607668/129472585-badae450-52d2-442e-9d50-e4d0d8fce83a.png">
 
 ````sql
-CREATE TEMP TABLE running_orders_temp AS 
+CREATE TEMP TABLE runner_orders_temp AS 
 SELECT order_id,
 		runner_id,
 		CASE WHEN pickup_time IS NULL OR pickup_time LIKE 'null' THEN ' '
@@ -86,19 +86,21 @@ SELECT order_id,
 FROM pizza_runner.runner_orders
 ````
 Correct the data type in running_orders_temp table - unable to get the correct output so I updated the datatypes from within the PGAdmin* iteself to:
-- `pickup_time` - `timestamp without time zone`
-- 'distance1` - `double precision`
-- `duration` - `integer`
-
-*took ChatGPTs help for this
-
-Below is the SQL Code though that alters the datatypes in the table:
 ````sql
-ALTER TABLE running_orders_temp 
-ALTER COLUMN pickup_time DATETIME,
-ALTER COLUMN distance FLOAT,
-ALTER COLUMN duration INT
+ALTER TABLE runner_orders_temp
+    ALTER COLUMN pickup_time TYPE TIMESTAMP USING 
+        CASE WHEN pickup_time = ' ' THEN NULL 
+        ELSE pickup_time::timestamp END,
+    ALTER COLUMN distance TYPE FLOAT USING 
+        CASE WHEN distance = ' ' THEN NULL 
+        ELSE distance::float END,
+    ALTER COLUMN duration TYPE INTEGER USING 
+        CASE WHEN duration = ' ' THEN NULL 
+        ELSE duration::integer END;
 ````
+
+*took Claud's help for this
+
 ***
 
 ## Questions with Solutions
@@ -177,6 +179,122 @@ ORDER  BY total_pizzas DESC
 | Vegetarian  | 103         |   1  |
 | Vegetarian  | 102         |    1 |
 | Vegetarian  | 105         |    1 |
+
+### 6. What was the maximum number of pizzas delivered in a single order?
+
+````sql
+SELECT 	customer_orders_temp.order_id AS order_id,
+		COUNT(pizza_names.pizza_id) AS pizza_delivered
+FROM customer_orders_temp
+JOIN pizza_runner.pizza_names ON customer_orders_temp.pizza_id = pizza_names.pizza_id 
+GROUP BY orders
+ORDER  BY pizza_delivered DESC
+````
+#### Solution:
+| orders | pizza_delivered | 
+| ----------- | -----------  |
+| 4         |  3   |
+| 10         |   2  |
+|  3         |   2  |
+|  2         |   1  |
+|  7         |   1  |
+| 1         |    1 |
+|  9         |    1 |
+|  8         |    1 |
+|  5       |    1 |
+|  6        |    1 |
+
+### 7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+
+````sql
+SELECT	c.customer_id AS customer_id,
+		SUM(CASE WHEN c.exclusions <> ' ' OR c.extras <> ' ' THEN 1
+		ELSE 0
+		END) AS change,
+		SUM(CASE WHEN c.exclusions = ' ' AND c.extras = ' ' THEN 1
+		ELSE 0
+		END) AS no_change
+FROM customer_orders_temp c
+JOIN runner_orders_temp r ON c.order_id = r.order_id
+WHERE r.cancellation = ' '
+GROUP BY customer_id
+ORDER  BY customer_id 
+		
+````
+#### Solution:
+| change | customer_id | no change |
+| ----------- | -----------  |----  |
+| 2  | 101         |  0   |
+| 2  | 102         |   1  |
+| 2  | 103         |   0  |
+| 3  | 104         |   0  |
+| 2  | 105         |   1  |
+
+### 8.How many pizzas were delivered that had both exclusions and extras?
+
+````sql
+SELECT  
+  COUNT(*) AS pizza_count
+FROM customer_orders_temp AS c
+JOIN runner_orders_temp AS r
+  ON c.order_id = r.order_id
+WHERE r.distance >= 1 
+  AND exclusions <> ' ' 
+  AND extras <> ' ';
+````
+| pizza_count|
+| ----------- |
+| 7  |
+
+This is an incorrect answer!!
+
+### 9. What was the total volume of pizzas ordered for each hour of the day?
+
+````sql
+SELECT EXTRACT(HOUR FROM c.order_date) AS hour,
+		COUNT(pizza_id) AS ordered_pizzas
+FROM customer_orders_temp c
+GROUP BY hour
+ORDER BY hour
+````
+#### Solution:
+| hour | ordered_pizzas| 
+| ----------- | -----------  |
+| 11        |  1  |
+| 13         |   3  |
+|  18         |   3  |
+|  19         |   1  |
+|  21         |  3  |
+| 23         |    3 |
+
+### 10. What was the volume of orders for each day of the week?
+
+````sql
+SELECT 
+    CASE EXTRACT(DOW FROM c.order_date)
+        WHEN 0 THEN 'Sunday'
+        WHEN 1 THEN 'Monday'
+        WHEN 2 THEN 'Tuesday'
+        WHEN 3 THEN 'Wednesday'
+        WHEN 4 THEN 'Thursday'
+        WHEN 5 THEN 'Friday'
+        WHEN 6 THEN 'Saturday'
+    END AS day_of_week,
+    COUNT(c.pizza_id) AS ordered_pizzas
+FROM 
+    customer_orders_temp c
+GROUP BY 
+    day_of_week, EXTRACT(DOW FROM c.order_date)
+ORDER BY 
+    EXTRACT(DOW FROM c.order_date)
+````
+#### Solution:
+| day_of_week | ordered_pizzas| 
+| ----------- | -----------  |
+| Wednesday        |  5  |
+| Thursday        |   3  |
+| Friday         |   1  |
+|  Saturday      |   5  |
 
 
 ***
