@@ -96,7 +96,7 @@ ALTER TABLE runner_orders_temp
         ELSE distance::float END,
     ALTER COLUMN duration TYPE INTEGER USING 
         CASE WHEN duration = ' ' THEN NULL 
-        ELSE duration::integer END;
+        ELSE duration::integer END
 ````
 
 *took Claud's help for this
@@ -271,7 +271,7 @@ ORDER BY hour
 
 ````sql
 SELECT 
-    CASE EXTRACT(DOW FROM c.order_date)
+    CASE EXTRACT(DOW FROM c.order_time)
         WHEN 0 THEN 'Sunday'
         WHEN 1 THEN 'Monday'
         WHEN 2 THEN 'Tuesday'
@@ -284,7 +284,7 @@ SELECT
 FROM 
     customer_orders_temp c
 GROUP BY 
-    day_of_week, EXTRACT(DOW FROM c.order_date)
+    day_of_week, EXTRACT(DOW FROM c.order_time)
 ORDER BY 
     EXTRACT(DOW FROM c.order_date)
 ````
@@ -302,19 +302,144 @@ ORDER BY
 
 ````sql
 SELECT COUNT(runner_id) AS runner_signup,
-       DATE '2021-01-01' + ((DATE_PART('day', AGE(registration_date, DATE '2021-01-01')) / 7)::int * 7) AS signup_period
+       (DATE_PART('day', AGE(registration_date, DATE '2021-01-01')) / 7)::int AS signup_week
 FROM pizza_runner.runners
-GROUP BY signup_period
-ORDER BY signup_period
+GROUP BY signup_week
+ORDER BY signup_week
 ````
 #### Solution:
-| runner_signup | signup_period| 
+| runner_signup | signup_week| 
 | ----------- | -----------  |
-| 2        |  2021-01-01  |
-| 1        |   2021-01-08  |
-| 1         |   2021-01-15  |
+| 2        |  1  |
+| 1        |   2  |
+| 1         |   3  |
+
+### 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
+
+````sql
+WITH avg_pickup_time AS (
+  SELECT 
+    c.order_id,
+    r.runner_id,
+    EXTRACT(EPOCH FROM (r.pickup_time - c.order_time)) / 60 AS pickup_minutes
+  FROM customer_orders_temp c
+  JOIN runner_orders_temp r 
+    ON c.order_id = r.order_id
+  WHERE r.cancellation = ' '
+)
+SELECT runner_id,
+  		AVG(pickup_minutes) AS avg_pickup_mins
+FROM avg_pickup_time
+WHERE pickup_minutes > 1
+GROUP BY runner_id
+````
+#### Solution:
+| runner_id | avg_pickup_mins| 
+| ----------- | -----------  |
+| 1        |  15.6777777777777778  |
+| 2        |   23.7200000000000000  |
+| 3         |   10.4666666666666667  |
+
+### 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
+
+````sql
+WITH prep_time AS(
+	SELECT 	c.order_id,
+			COUNT(c.pizza_id) AS pizza_numbers,
+			c.order_time,
+			r.pickup_time,
+			EXTRACT(EPOCH FROM (r.pickup_time - c.order_time))/60 AS prep_time_mins
+	FROM customer_orders_temp c
+	JOIN runner_orders_temp r ON c.order_id = r.order_id
+	WHERE r.cancellation = ' '
+	GROUP BY c.order_id,c.order_time,r.pickup_time
+)
+SELECT pizza_numbers,
+		AVG(prep_time_mins) AS avg_prep_time
+FROM prep_time
+GROUP BY pizza_numbers
+````
+#### Solution:
+| pizza_numbers | avg_prep_time| 
+| ----------- | -----------  |
+| 1        |  12.3566666666666667 |
+| 2        |  18.3750000000000000 |
+| 3         |   29.2833333333333333  |
+
+### 4. What was the average distance travelled for each customer?
+
+````sql
+SELECT  c.customer_id,
+		AVG(r.distance) AS avg_distance
+FROM customer_orders_temp c
+JOIN runner_orders_temp r ON c.order_id = r.order_id
+WHERE r.cancellation = ' '
+GROUP BY c.customer_id
+````
+#### Solution:
+| customer_id | avg_distance| 
+| ----------- | -----------  |
+| 101        |  20  |
+| 102        |   16.7333  |
+| 103         |   23.39  |
+|  104      |   10  |
+|  105      |   25  |
+
+### 5. What was the difference between the longest and shortest delivery times for all orders?
+
+````sql
+SELECT MAX(r.duration) - MIN(r.duration) AS difference
+FROM runner_orders_temp r
+WHERE duration IS NOT NULL
+````
+#### Solution:
+| difference | 
+| ----------- | 
+| 30        | 
+
+### 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
+
+````sql
+SELECT 	r.order_id,
+	r.runner_id,
+	AVG(r.distance/r.duration * 60) AS avg_speed
+FROM runner_orders_temp r
+WHERE r.cancellation = ' '
+GROUP BY r.runner_id, r.order_id
+````
+#### Solution:
+| order_id | runner_id | avg_speed |
+| ----------- | -----------  |----  |
+|1|	|1|	37.5|
+|2|	|1|	44.44444444444444|
+|3|	|1|	40.2|
+|10|	|1|	60|
+|4|	|2|	35.099999999999994|
+|7|	|2|	60|
+|8|	|2|	93.6|
+|5 |	|3|	40|
+
+### 7. What is the successful delivery percentage for each runner?
+
+````sql
+SELECT 
+  runner_id, 
+  ROUND(100 * SUM(
+    CASE WHEN distance = 0 THEN 0
+    ELSE 1 END) / COUNT(*), 0) AS success_perc
+FROM #runner_orders
+GROUP BY runner_id
+````
+copy-pasted!
+
 ***
 ### Learnings
 ##### 1. Creating ERD Diagram in Postgre SQL itself
 ##### 2. Creating temporary tables
 ##### 3. Use of TRIM in CASE Statements
+##### 4. Use of EPOCH to calculate time difference
+*EXTRACT(EPOCH FROM timestamp): This function in PostgreSQL calculates the number of seconds that have elapsed since the epoch for the given timestamp
+For example:
+- EXTRACT(EPOCH FROM TIMESTAMP '2023-01-01 00:00:00') returns 1672531200, the number of seconds from 1970-01-01 to 2023-01-01.
+- Later we use  "/ 60" which converts the seconds into minutes to make it more human-readable and relevant to the analysis.*
+  
