@@ -46,7 +46,7 @@ with `blank` space. This will be done by:
   	  WHEN extras IS NULL or extras LIKE 'null' THEN ' '
   	  ELSE extras
   	  END AS extras,
-  	order_date
+  	order_time
   FROM pizza_runner.customer_orders
 ````
 
@@ -410,14 +410,14 @@ GROUP BY r.runner_id, r.order_id
 #### Solution:
 | order_id | runner_id | avg_speed |
 | ----------- | -----------  |----  |
-|1|	|1|	37.5|
-|2|	|1|	44.44444444444444|
-|3|	|1|	40.2|
-|10|	|1|	60|
-|4|	|2|	35.099999999999994|
-|7|	|2|	60|
-|8|	|2|	93.6|
-|5 |	|3|	40|
+|1|	1|	37.5|
+|2|	1|	44.44444444444444|
+|3|	1|	40.2|
+|10|	1|	60|
+|4|	2|	35.099999999999994|
+|7|	2|	60|
+|8|	2|	93.6|
+|5 |	3|	40|
 
 ### 7. What is the successful delivery percentage for each runner?
 
@@ -432,14 +432,103 @@ GROUP BY runner_id
 ````
 copy-pasted!
 
+## C. Ingredient Optimisation
+
+### 1. What are the standard ingredients for each pizza?
+
+````sql
+SELECT c.pizza_id,
+		pizza_runner.pizza_names.pizza_name,
+		pizza_runner.pizza_recipes.toppings
+FROM customer_orders_temp c
+JOIN pizza_runner.pizza_names ON c.pizza_id = pizza_names.pizza_id
+JOIN pizza_runner.pizza_recipes ON c.pizza_id = pizza_recipes.pizza_id
+GROUP BY c.pizza_id,
+		pizza_runner.pizza_names.pizza_name,
+		pizza_runner.pizza_recipes.toppings
+````
+#### Solution:
+| pizza_id | pizza_name | toppings |
+| ----------- | -----------  |----  |
+|2|	Vegetarian|	4, 6, 7, 9, 11, 12|
+|1|	Meatlovers|	1, 2, 3, 4, 5, 6, 8, 10|
+
+### 2. What was the most commonly added extra?
+
+```sql
+WITH extras_cte AS(
+	SELECT  pizza_id,
+			NULLIF(TRIM(REGEXP_SPLIT_TO_TABLE(extras, ',')), '') AS extras_id
+	FROM customer_orders_temp 
+)
+SELECT  ex.extras_id:: INTEGER,
+		pizza_runner.pizza_toppings.topping_name AS extra_topping,
+		COUNT(ex.extras_id::INTEGER) AS occurence_count
+FROM extras_cte ex
+JOIN pizza_runner.pizza_toppings ON ex.extras_id:: INTEGER = pizza_toppings.topping_id
+GROUP BY ex.extras_id:: INTEGER, extra_topping
+ORDER BY occurence_count DESC
+````
+#### Solution:
+| extras_id | extra_topping| occurence_count |
+| ----------- | -----------  |----  |
+|1|	Bacon|		4|
+|4|	Cheese|		1|
+|5|	Chicken|	1|
+
+### 3. What was the most common exclusion?
+
+````sql
+WITH exclusions_cte AS(
+	SELECT  pizza_id,
+			NULLIF(TRIM(REGEXP_SPLIT_TO_TABLE(exclusions, ',')), '') AS exclusions_id
+	FROM customer_orders_temp 
+)
+SELECT  exc.exclusions_id:: INTEGER,
+		pizza_runner.pizza_toppings.topping_name AS excluded_topping,
+		COUNT(exc.exclusions_id::INTEGER) AS occurence_count
+FROM exclusions_cte exc
+JOIN pizza_runner.pizza_toppings ON exc.exclusions_id::INTEGER = pizza_toppings.topping_id
+GROUP BY exc.exclusions_id::INTEGER, excluded_topping
+ORDER BY occurence_count DESC
+````
+#### Solution:
+| exclusions_id | excluded_topping| occurence_count |
+| ----------- | -----------  |----  |
+|4|	Cheese|			4|
+|6|	Mushrooms|		1|
+|2|	BBQ Sauce|		1|
+
+### 4. Generate an order item for each record in the customers_orders table in the format of one of the following:
+- Meat Lovers
+- Meat Lovers - Exclude Beef
+- Meat Lovers - Extra Bacon
+- Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
+
+````sql
+SELECT 
+````
+
 ***
 ### Learnings
-##### 1. Creating ERD Diagram in Postgre SQL itself
-##### 2. Creating temporary tables
-##### 3. Use of TRIM in CASE Statements
-##### 4. Use of EPOCH to calculate time difference
-*EXTRACT(EPOCH FROM timestamp): This function in PostgreSQL calculates the number of seconds that have elapsed since the epoch for the given timestamp
-For example:
-- EXTRACT(EPOCH FROM TIMESTAMP '2023-01-01 00:00:00') returns 1672531200, the number of seconds from 1970-01-01 to 2023-01-01.
-- Later we use  "/ 60" which converts the seconds into minutes to make it more human-readable and relevant to the analysis.*
-  
+##### 1. ERD Diagram within Postgre SQL itself
+##### 2. Temporary tables
+	CREATE TEMP TABLE AS
+##### 3. TRIM in CASE Statements
+##### 4. EPOCH to calculate time difference
+	*EXTRACT(EPOCH FROM timestamp): This function in PostgreSQL calculates the number of seconds that have elapsed since the epoch for the given timestamp
+	For example:
+	- EXTRACT(EPOCH FROM TIMESTAMP '2023-01-01 00:00:00') returns 1672531200, the number of seconds from 1970-01-01 to 2023-01-01.
+	- Later we use  "/ 60" which converts the seconds into minutes to make it more human-readable and relevant to the analysis.*
+
+##### 5. REGEXP_SPLIT_TO_TABLE
+	REGEXP_SPLIT_TO_TABLE(exclusions, ',')
+ 	It splits the exclusions string into multiple rows using a specified delimiter (in this case, a comma ,).
+	Each part becomes a separate row.
+  	Example: For exclusions = '1,2,3', it generates
+	|order_id    |exclusion|
+	|1           |1|
+	|1           |2|
+	|1           |3|
+
+##### 6.
