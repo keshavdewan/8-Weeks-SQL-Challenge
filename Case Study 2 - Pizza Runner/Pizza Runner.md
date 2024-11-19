@@ -505,8 +505,96 @@ ORDER BY occurence_count DESC
 - Meat Lovers - Extra Bacon
 - Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
 
+## D. Pricing & Ratings
+
+### 1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes — how much money has Pizza Runner made so far if there are no delivery fees?
+
+````sql
+SELECT SUM(
+	CASE
+	WhEN c.pizza_id = 1 THEN 12
+	ELSE 10
+	END) AS total_cost
+FROM customer_orders_temp c
+JOIN pizza_runner.runner_orders r ON c.order_id = r.order_id
+WHERE r.cancellation = ''
+````
+
+*somehow solution changes everytime I log-in to my session...quite annoying!!!
+
+### 2. What if there was an additional $1 charge for any pizza extras? 
+
 ````sql
 SELECT 
+    SUM(
+        CASE 
+            WHEN c.pizza_id = 1 THEN 12
+            ELSE 10 
+        END +
+        COALESCE(array_length(string_to_array(NULLIF(c.extras, ''), ','), 1), 0)  
+    ) AS total_amount
+FROM customer_orders_temp c
+JOIN runner_orders_temp r ON c.order_id = r.order_id
+WHERE r.cancellation = ' ';
+````
+### 3. The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for this new dataset — generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.
+
+````sql
+DROP TABLE IF EXISTS pizza_runner.ratings;
+
+CREATE TABLE pizza_runner.ratings (
+    order_id INTEGER,
+    ratings INTEGER
+);
+
+INSERT INTO pizza_runner.ratings (order_id, ratings)
+VALUES
+    (1, 3),
+    (2, 5),
+    (3, 3),
+    (4, 1),
+    (5, 5),
+    (7, 3),
+    (8, 4),
+    (10, 3);
+````
+
+### 4. Using your newly generated table — can you join all of the information together to form a table which has the following information for successful deliveries? - customer_id, order_id,runner_id,rating, order_time, pickup_time, Time between order and pickup,vDelivery duration, Average speed, Total number of pizzas
+````sql
+/* Using your newly generated table — 
+can you join all of the information together to form a table which 
+has the following information for successful deliveries? 
+- customer_id, order_id,runner_id,rating, order_time, 
+pickup_time, Time between order and pickup,
+Delivery duration, Average speed, Total number of pizzas */
+
+SELECT  c.customer_id,
+		c.order_id, 
+		r.runner_id,
+		ra.ratings,
+		c.order_time,
+		r.pickup_time,
+		EXTRACT(EPOCH FROM (r.pickup_time - c.order_time)) / 60 AS time_between_order_and_pickup,
+		r.duration,
+		AVG(r.distance/r.duration * 60) AS avg_speed,
+		COUNT(c.pizza_id) AS pizza_count
+FROM customer_orders_temp  c
+JOIN runner_orders_temp r ON c.order_id = r.order_id
+JOIN pizza_runner.ratings ra ON c.order_id = ra.order_id
+GROUP BY  c.customer_id, c.order_id, r.runner_id, ra.ratings, c.order_time, r.pickup_time, r.duration				
+````
+### 5. If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled — how much money does Pizza Runner have left over after these deliveries?
+
+````sql
+SELECT 
+    SUM(
+        CASE 
+            WHEN c.pizza_id = 1 THEN 12
+            ELSE 10 
+        END) - SUM(r.distance)*0.30 AS total_amount
+FROM customer_orders_temp c
+JOIN runner_orders_temp r ON c.order_id = r.order_id
+WHERE r.cancellation = ' '
 ````
 
 ***
@@ -531,4 +619,23 @@ SELECT
 	|1           |2|
 	|1           |3|
 
-##### 6.
+##### 6. COALESCE
+````sql
+COALESCE(
+    CASE 
+        WHEN c.extras IS NOT NULL AND c.extras != '' THEN 
+            array_length(string_to_array(c.extras, ','), 1)
+        ELSE 0 
+    END, 0)
+````
+	- `string_to_array(c.extras, ',')` - This function splits the string in c.extras by commas and returns an array.
+		Example:
+		If c.extras = '1,4,6', then string_to_array('1,4,6', ',') will return the array ['1', '4', '6']
+  	- `array_length(string_to_array(c.extras, ','), 1)` - This function counts the number of elements (items) in the array produced by string_to_array.
+The second parameter 1 refers to the dimension of the array we are interested in (since string_to_array produces a 1D array, we use 1 to count the length of that array).
+		Example:
+		If c.extras = '1,4,6', then array_length(['1', '4', '6'], 1) will return 3, since there are three items in the array.
+  	- `COALESCE(..., 0)` - The COALESCE function returns the first non-NULL value in the list of arguments.
+   		Example:
+		If the CASE statement results in a number (e.g., 3 or 0), COALESCE just returns that number.
+ 		
