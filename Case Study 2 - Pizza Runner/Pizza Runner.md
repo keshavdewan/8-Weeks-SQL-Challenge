@@ -11,7 +11,6 @@ The case study has been divided into different question categories that includes
   - [B. Runner and Customer Experience](#b-runner-and-customer-experience)
   - [C. Ingredient Optimisation](#c-ingredient-optimisation)
   - [D. Pricing and Ratings](#d-pricing-and-ratings)
-  - [E. Bonus Data Manipulation Challenge] (#e-bonus-data-manipulation-challenge)
   - [Learnings](Learnings)
 
 # Task
@@ -505,7 +504,7 @@ ORDER BY occurence_count DESC
 - Meat Lovers - Extra Bacon
 - Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
 
-## D. Pricing & Ratings
+## D. Pricing and Ratings
 
 ### 1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes — how much money has Pizza Runner made so far if there are no delivery fees?
 
