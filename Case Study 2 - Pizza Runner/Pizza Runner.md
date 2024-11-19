@@ -599,9 +599,9 @@ WHERE r.cancellation = ' '
 ***
 ### Learnings
 ##### 1. [ERD Diagram within Postgre SQL itself](#erd-diagram-directly-in-postgres)
-##### 2. [Temporary tables](#creating-a-temporary-table)
+##### 2. Temporary tables
 	CREATE TEMP TABLE AS
-##### 3. [TRIM in CASE Statements](#table:-runner_orders)
+##### 3. TRIM in CASE Statements
 ##### 4. EPOCH to calculate time difference
 	*EXTRACT(EPOCH FROM timestamp): This function in PostgreSQL calculates the number of seconds that have elapsed since the epoch for the given timestamp
 	For example:
