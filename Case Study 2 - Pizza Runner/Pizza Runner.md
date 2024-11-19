@@ -598,7 +598,7 @@ WHERE r.cancellation = ' '
 
 ***
 ### Learnings
-##### 1. ERD Diagram within Postgre SQL itself
+##### 1. [ERD Diagram within Postgre SQL itself](#-ERD-Diagram-directly-in-Postgres)
 ##### 2. Temporary tables
 	CREATE TEMP TABLE AS
 ##### 3. TRIM in CASE Statements
