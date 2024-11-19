@@ -599,7 +599,7 @@ WHERE r.cancellation = ' '
 ***
 ### Learnings
 ##### 1. [ERD Diagram within Postgre SQL itself](#erd-diagram-directly-in-postgres)
-##### 2. Temporary tables
+##### 2. [Temporary tables](#create-temp-tables-customer_orders_temp-as)
 	CREATE TEMP TABLE AS
 ##### 3. TRIM in CASE Statements
 ##### 4. EPOCH to calculate time difference
