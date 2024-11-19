@@ -631,7 +631,8 @@ COALESCE(
 		Example:
 		If c.extras = '1,4,6', then string_to_array('1,4,6', ',') will return the array ['1', '4', '6']
   	- `array_length(string_to_array(c.extras, ','), 1)` - This function counts the number of elements (items) in the array produced by string_to_array.
-The second parameter 1 refers to the dimension of the array we are interested in (since string_to_array produces a 1D array, we use 1 to count the length of that array).
+		The second parameter 1 refers to the dimension of the array we are interested in (since string_to_array produces a 1D array, 
+  		we use 1 to count the length of that array).
 		Example:
 		If c.extras = '1,4,6', then array_length(['1', '4', '6'], 1) will return 3, since there are three items in the array.
   	- `COALESCE(..., 0)` - The COALESCE function returns the first non-NULL value in the list of arguments.
