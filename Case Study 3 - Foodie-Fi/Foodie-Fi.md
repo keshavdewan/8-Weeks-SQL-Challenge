@@ -30,7 +30,9 @@ There are two tables in the database -
 ### A. Customer Journey
 Based off the 8 sample customers provided in the sample from the subscriptions table, write a brief description about each customer’s onboarding journey.
 
-_Approach taken_ - Randomly selected 8 customers from the subscription table, they could be seen in the table image itself
+_Approach taken_
+-	Randomly selected 8 customers from the subscription table, they could be seen in the table image itself
+
 ````sql
 SELECT 	s.customer_id,
 		s.plan_id,
@@ -78,7 +80,8 @@ WHERE s.customer_id IN (1,2,11,13,15,16,18,19)
 ***
 ### B. Data Analysis Questions
 ## 1. How many customers has Foodie-Fi ever had?
-_Approach taken_ - Use Count & Distinct functions for calculating the number of customers
+_Approach taken_
+-	Use `Count()` followed by `Distinct()` functions for calculating the number of customers
 ````sql
 SELECT 	COUNT(DISTINCT(customer_id)) AS customer_count
 FROM subscriptions
@@ -88,3 +91,97 @@ FROM subscriptions
 | customer_count | 
 |-------------|
 |1000           |
+
+## 2. What is the monthly distribution of trial plan `start_date` values for our dataset - use the start of the month as the group by value
+_Approach taken_
+-	Counted the plan_names
+-	Extracted month from the `start_date` column - Function Used - `EXTRACT(MONTH FROM -table_name-)`
+-	Used WHERE clause to filter the `plan_name` as 'trial'
+-	 Grouped results by month and ordered them in ascending order
+
+````sql
+SELECT 	COUNT(p.plan_name) AS trial_count,
+		EXTRACT(MONTH FROM s.start_date) AS month
+FROM plans p
+JOIN subscriptions s ON p.plan_id = s.plan_id
+WHERE plan_name = 'trial'
+GROUP BY month
+ORDER BY month
+````
+#### Solution:
+| trial_count | month | 
+|-------------|---------|
+| 88           | 1       | 
+| 68           | 2       | 
+| 94           | 3       | 
+| 81           | 4       | 
+| 88          | 5       |
+| 79          | 6       | 
+| 89          | 7       | 
+| 88          | 8       |
+| 87          | 9       | 
+| 79          | 10      |
+| 75          | 11      | 
+| 84          | 12      | 
+
+## 3. What plan `start_date` values occur after the year 2020 for our dataset? Show the breakdown by count of events for each `plan_name`
+_Approach taken_
+-	Selected and Counted the plan_names
+-	Extracted year from the `start_date` column - Function Used - `EXTRACT(YEAR FROM s.start_date)` > 2020
+-	GROUP BY `plan_id`, `plan_name`
+-	ORDER BY `plan_id`
+
+````sql
+SELECT 	p.plan_id,
+		p.plan_name,
+		COUNT(p.plan_name) AS plan_count
+FROM plans p
+JOIN subscriptions s ON p.plan_id = s.plan_id
+WHERE EXTRACT(YEAR FROM s.start_date) > 2020
+GROUP BY p.plan_id, plan_name
+ORDER BY p.plan_id
+````
+#### Solution:
+| plan_id | plan_name | plan_count    |
+|-------------|---------|---------------|
+| 1           | basic monthly       | 8         |
+| 2           | pro monthly       | 60 |
+| 3           | pro annual      | 63         | 
+| 4           | churn      | 71 |
+
+## 4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
+_Approach taken_
+-	ALthough subquery would have been a smaller approach, but I would like to apply CTEs here so as to give a better understanding of the case
+-	`total_customer` CTE - counts the total distinct customers from the `subscriptions` table
+-	`churned_customers` CTE - counts distinct customers with plan_id = 4
+-	ROUND((100* `churned` / `total`),1) - computes the percentage and rounds it to 1 place
+-	`CROSS JOIN` Combines the total customer count and churned customer count without introducing extra rows.
+
+````sql
+WITH total_customers AS (
+    SELECT COUNT(DISTINCT customer_id) AS total_customer_count
+    FROM subscriptions
+),
+churned_customers AS (
+    SELECT COUNT(DISTINCT customer_id) AS churned_customer_count
+    FROM subscriptions
+    WHERE plan_id = 4
+)
+SELECT 
+    cc.churned_customer_count AS customer_churn,
+    ROUND(100.0 * cc.churned_customer_count / tc.total_customer_count, 1) AS churn_percentage
+FROM churned_customers cc
+CROSS JOIN total_customers tc
+````
+#### Solution:
+| customer_churn | churn_percentage | 
+|-------------|---------|
+| 307           | 30.7       | 
+
+
+
+
+***
+### Learnings
+##### 1.`CROSS JOIN`
+-	combines every row of the first table with every row of the second table (kind of SUMX)
