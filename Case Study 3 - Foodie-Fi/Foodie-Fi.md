@@ -30,7 +30,7 @@ There are two tables in the database -
 ### A. Customer Journey
 Based off the 8 sample customers provided in the sample from the subscriptions table, write a brief description about each customer’s onboarding journey.
 
-Approach - Randomly selected 8 customers from the subscription table, they could be seen in the table image itself
+_Approach taken_ - Randomly selected 8 customers from the subscription table, they could be seen in the table image itself
 ````sql
 SELECT 	s.customer_id,
 		s.plan_id,
@@ -74,3 +74,17 @@ WHERE s.customer_id IN (1,2,11,13,15,16,18,19)
     - Customer_id: 16 - moved to basic monthly after the trial and later moved to pro annual after 4 months of end of basic monthly 
     - Customer_id: 18 - started with trial and converted it to pro monthly
     - Customer_id: 19 - started with trial and converted it to pro monthly and later changed to pro annual after two monhts 
+
+***
+### B. Data Analysis Questions
+## 1. How many customers has Foodie-Fi ever had?
+_Approach taken_ - Use Count & Distinct functions for calculating the number of customers
+````sql
+SELECT 	COUNT(DISTINCT(customer_id)) AS customer_count
+FROM subscriptions
+````
+
+#### Solution:
+| customer_count | 
+|-------------|
+|1000           |
