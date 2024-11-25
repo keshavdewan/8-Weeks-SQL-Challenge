@@ -1,5 +1,6 @@
 # 8-Weeks-SQL-Challenge
 This 8-week SQL challenge uses various case studies to enhance my SQL skills. Each case study presents unique problems that allow me to demonstrate my knowledge of SQL query writing, data analysis, and logical problem-solving.
+
 <img src= "https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/40e34dc7ae9294680e782b175515748302971d80/Main%20Page.png" width="500" height="400" />
 
 The content and project inspiration has been taken from [Katie Huang](https://github.com/katiehuangx)
