@@ -151,7 +151,7 @@ ORDER BY p.plan_id
 
 ## 4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
 _Approach taken_
--	ALthough subquery would have been a smaller approach, but I would like to apply CTEs here so as to give a better understanding of the case
+-	Although subquery would have been a smaller approach, but I would like to apply CTEs here so as to give a better understanding of the case
 -	`total_customer` CTE - counts the total distinct customers from the `subscriptions` table
 -	`churned_customers` CTE - counts distinct customers with plan_id = 4
 -	ROUND((100* `churned` / `total`),1) - computes the percentage and rounds it to 1 place
@@ -178,8 +178,39 @@ CROSS JOIN total_customers tc
 |-------------|---------|
 | 307           | 30.7       | 
 
+### 5. How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
+_Approach taken_
+-	Query divided into 3 parts
+	-	CTE `trial_start_date` finds `start_date` i.e. trial date for each customers
+ 	-	CTE `churn_after_trial` finds customers churned after 1 week of trial, this been done by adding 7 days `INTERVAL` to `min_start_date`
+  	-	The final `SELECT` statement counts the customers and percentage of churned customers
 
-
+````sql
+WITH trial_start_date AS (
+	SELECT customer_id,
+			MIN(start_date) AS min_start_date
+	FROM foodie_fi.subscriptions
+	WHERE plan_id =0
+	GROUP BY customer_id
+),
+churn_after_trial AS ( 
+	SELECT tsd.customer_id
+	FROM trial_start_date tsd
+	JOIN foodie_fi.subscriptions s ON tsd.customer_id = s.customer_id
+	WHERE plan_id = 4
+	AND s.start_date BETWEEN tsd.min_start_date AND tsd.min_start_date + INTERVAL '7 days'
+)
+SELECT COUNT(DISTINCT cat.customer_id) AS cust_numbers,
+		ROUND(100.0* COUNT(DISTINCT cat.customer_id)/
+				(SELECT COUNT(DISTINCT customer_id)
+		FROM foodie_fi.subscriptions
+		)) AS churn_percent
+FROM churn_after_trial cat
+````
+#### Solution:
+| cust_nmbers | churn_percent | 
+|-------------|---------|
+| 92           | 9       | 
 
 ***
 ### Learnings
