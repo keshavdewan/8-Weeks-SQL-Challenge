@@ -212,7 +212,52 @@ FROM churn_after_trial cat
 |-------------|---------|
 | 92           | 9       | 
 
+### 6. What is the number and percentage of customer plans after their initial free trial?
+_Approach taken_
+-	Used LEAD() for this query, as it was termed to be 'simpler'
+-	`LEAD(plan_id) OVER (PARTITION BY customer_id ORDER BY plan_id)`: This expression retrieves the `plan_id` from the next row within the same `customer_id` partition, ordered by `plan_id`. This effectively identifies the plan a customer switches to after their current plan.
+-	`WHERE next_plan_id IS NOT NULL AND plan_id = 0`: Filters the data to include only conversions from the free trial (`plan_id = 0`) and excludes cases where there is no next plan (`next_plan_id IS NOT NULL`)
+
+*took AI's help for this
+
+````sql
+WITH next_plans AS (
+	SELECT customer_id,
+			plan_id,
+			LEAD(plan_id) OVER (
+				PARTITION BY customer_id
+				ORDER BY plan_id
+			) AS next_plan_id
+	FROM foodie_fi.subscriptions
+	)
+SELECT next_plan_id AS plan_id,
+		COUNT(customer_id) AS converted_customers,
+		ROUND(100.0* 
+				COUNT(customer_id)::NUMERIC/
+				(SELECT COUNT(DISTINCT customer_id)
+				FROM foodie_fi.subscriptions)
+				,1) AS conversion_percentage
+FROM next_plans
+WHERE next_plan_id IS NOT NULL
+AND plan_id = 0
+GROUP BY next_plan_id
+ORDER BY next_plan_id
+````
+#### Solution:
+| plan_id | converted_customers | conversion_percentage    |
+|-------------|---------|---------------|
+| 1           | 546      | 54.6         |
+| 2           | 325     | 32.5 |
+| 3           | 37     | 3.7         | 
+| 4           | 92      | 9.2 |
+
 ***
 ### Learnings
 ##### 1.`CROSS JOIN`
 -	combines every row of the first table with every row of the second table (kind of SUMX)
+
+##### 2. `LEAD`
+-	The LEAD() function allows you to access data from a subsequent row within a specified partition of a result set. It's particularly helpful when you need to compare values from different rows without using self-joins or subqueries.
+````sql
+LEAD(expression, offset, default_value) OVER (PARTITION BY partition_expression ORDER BY sort_expression)
+````
