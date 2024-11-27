@@ -218,7 +218,7 @@ _Approach taken_
 -	`LEAD(plan_id) OVER (PARTITION BY customer_id ORDER BY plan_id)`: This expression retrieves the `plan_id` from the next row within the same `customer_id` partition, ordered by `plan_id`. This effectively identifies the plan a customer switches to after their current plan.
 -	`WHERE next_plan_id IS NOT NULL AND plan_id = 0`: Filters the data to include only conversions from the free trial (`plan_id = 0`) and excludes cases where there is no next plan (`next_plan_id IS NOT NULL`)
 
-*took AI's help for this
+*took AI's and other's github profile help for this
 
 ````sql
 WITH next_plans AS (
@@ -250,6 +250,49 @@ ORDER BY next_plan_id
 | 2           | 325     | 32.5 |
 | 3           | 37     | 3.7         | 
 | 4           | 92      | 9.2 |
+
+### 7. What is the customer count and percentage breakdown of all 5 plan_name values at 2020-12-31?
+_Approach taken_
+-	CTE `customer_latest_date` selects customer with `MAX(start_date)` and later filters them with `WHERE` clause to be before '2020-12-31'
+-	CTE `customer_latest_plan` selects customers and their `plan_id` and joins the CTE with `subscriptions` table in order to determine the `plan_id`
+-	The final `SELECT` statement then aggregates the result by `plan_id` to calculate the customer count and percentage for each plan.	
+
+````sql
+WITH customer_latest_date AS(
+		SELECT customer_id,
+				MAX(start_date) AS latest_date
+		FROM foodie_fi.subscriptions
+		WHERE start_date <= '2020-12-31'
+		GROUP BY customer_id
+		),
+customer_latest_plan AS(
+		SELECT cld.customer_id,
+				s.plan_id
+		FROM customer_latest_date cld
+		JOIN foodie_fi.subscriptions s ON cld.customer_id = s.customer_id 
+		AND cld.latest_date = s.start_date
+)
+SELECT plan_id,
+		COUNT(DISTINCT customer_id) AS customers,
+		ROUND(100.0 * 
+				COUNT(DISTINCT customer_id)
+					/ (SELECT COUNT (DISTINCT customer_id)
+						FROM foodie_fi.subscriptions)
+				,1) AS percentage
+FROM customer_latest_plan
+GROUP BY plan_id
+````
+#### Solution:
+| plan_id | customers | percentage    |
+|-------------|---------|---------------|
+| 0           | 19      | 1.9         |
+| 1           | 224      | 22.4         |
+| 2           | 326     | 32.6 |
+| 3           | 195     | 19.5        | 
+| 4           | 236      | 23.6 |
+
+
+### 8. How many customers have upgraded to an annual plan in 2020?
 
 ***
 ### Learnings
