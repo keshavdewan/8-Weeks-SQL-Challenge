@@ -293,6 +293,107 @@ GROUP BY plan_id
 
 
 ### 8. How many customers have upgraded to an annual plan in 2020?
+_Approach taken_
+-	Selected distinct number of customers with an annual plan and start_date <= '2020-12-31'
+This was ane easy one for a change!
+
+````sql
+  SELECT plan_id,
+  		COUNT(DISTINCT customer_id) AS customers		
+  FROM foodie_fi.subscriptions
+  WHERE plan_id = 3 
+  AND start_date <= '2020-12-31'
+  GROUP BY plan_id
+````
+#### Solution:
+| plan_id | customers |
+|-------------|---------|
+| 3           | 195     |
+
+### 9. How many days on average does it take for a customer to upgrade to an annual plan from the day they join Foodie-Fi?
+_Approach taken_
+-	Subquery divided into 2 CTEs
+	- CTE `trial_plan`, shows the customers enrolled in the trial plan with the `MIN(start_date`
+ 	- CTE `annual_plan`, shows the customers enrolled in the annual plan with the `MAX(start_date)`
+  	- SELECT statement that averages out the difference between the maximum and minimum `start_date`
+
+````sql
+WITH trial_plan AS(
+	SELECT customer_id,
+			MIN(start_date) AS trial_start_date
+	FROM foodie_fi.subscriptions s
+	WHERE plan_id = 0 
+	GROUP BY customer_id
+),
+annual_plan AS(
+	SELECT customer_id,
+			MIN(start_date) AS annual_start_date
+	FROM foodie_fi.subscriptions s
+	WHERE plan_id = 3
+	GROUP BY customer_id
+)
+SELECT ROUND(AVG(ap.annual_start_date - tp.trial_start_date),0) AS avg_days_to_upgrade
+FROM annual_plan ap
+JOIN trial_plan tp ON ap.customer_id = tp.customer_id
+````
+#### Solution:
+| avg_days_to_upgrade | 
+|-------------|
+| 105           | 
+
+### 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)
+_Approach taken_
+-	People have used *width bucket* formula
+-	I am dividing the timeperiod by just 30 days and calulating using another CTE
+
+````sql
+WITH trial_plan AS (
+    SELECT 
+        customer_id, 
+        MIN(start_date) AS trial_start_date
+    FROM foodie_fi.subscriptions
+    WHERE plan_id = 0
+    GROUP BY customer_id
+),
+annual_plan AS (
+    SELECT 
+        customer_id, 
+        MIN(start_date) AS annual_start_date
+    FROM foodie_fi.subscriptions
+    WHERE plan_id = 3
+    GROUP BY customer_id
+),
+upgrade_periods AS (
+    SELECT 
+        trial_plan.customer_id,
+		trial_start_date,
+		annual_start_date,
+		annual_start_date-trial_start_date AS upgrade_days,
+		CASE
+			WHEN annual_start_date-trial_start_date <= 30 THEN '0-30 days'
+			WHEN annual_start_date-trial_start_date >30 AND annual_start_date-trial_start_date <= 60 THEN '31-60 days'
+			WHEN annual_start_date-trial_start_date >60 AND annual_start_date-trial_start_date <= 90 THEN '61-90 days'
+			ELSE '90+ days'
+		END AS upgrade_period
+	FROM trial_plan
+	JOIN annual_plan ON trial_plan.customer_id = annual_plan.customer_id
+)
+SELECT upgrade_period,
+		COUNT(*) AS num_customers,
+		AVG(upgrade_days) AS avg_days_to_upgrade
+FROM upgrade_periods
+GROUP BY upgrade_period
+ORDER BY upgrade_period
+````
+#### Solution:
+| upgrade_period | num_customers | avg_days_to_upgrade    |
+|-------------|---------|---------------|
+| 0-30 days           | 49     | 9.9591836734693878        |
+| 31-60 days           | 24     | 42.3333333333333333         |
+| 61-90 days           | 34     | 71.4411764705882353 |
+| 90+days           | 151     | 152.7086092715231788       | 
+
+### 11. 
 
 ***
 ### Learnings
