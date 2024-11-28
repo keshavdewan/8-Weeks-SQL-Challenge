@@ -309,8 +309,8 @@ GROUP BY plan_id
 
 ### 8. How many customers have upgraded to an annual plan in 2020?
 _Approach taken_
--	Selected distinct number of customers with an annual plan and start_date <= '2020-12-31'
-This was ane easy one for a change!
+-	Selected distinct number of customers with an annual plan and `start_date` <= '2020-12-31'
+	This was an easy one for a change!
 
 ````sql
   SELECT plan_id,
@@ -359,7 +359,7 @@ JOIN trial_plan tp ON ap.customer_id = tp.customer_id
 ### 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)
 _Approach taken_
 -	People have used *width bucket* formula
--	I am using CASE statement having 30day time gap and calulating using another CTE
+-	I am using CASE statement having 30day time gap and calculating using another CTE
 
 ````sql
 WITH trial_plan AS (
