@@ -344,7 +344,7 @@ JOIN trial_plan tp ON ap.customer_id = tp.customer_id
 ### 10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)
 _Approach taken_
 -	People have used *width bucket* formula
--	I am dividing the timeperiod by just 30 days and calulating using another CTE
+-	I am using CASE statement having 30day time gap and calulating using another CTE
 
 ````sql
 WITH trial_plan AS (
@@ -393,7 +393,39 @@ ORDER BY upgrade_period
 | 61-90 days           | 34     | 71.4411764705882353 |
 | 90+days           | 151     | 152.7086092715231788       | 
 
-### 11. 
+### 11. How many customers downgraded from a pro monthly to a basic monthly plan in 2020?
+_Approach taken_
+-	Using 2 CTEs for this query
+	- CTE `pro_monthly_customers` shows the customers with a pro monthly plan (`plan_id = 2`)
+ 	- CTE `basic_monthly_customers` shows the customers with a basic monthly plan ('plan_id = 1')
+  	- Final `SELECT` statement selects the customers with a pro monthly plan and joins the two CTEs.
+   	- By including `WHERE pmc.start_date < bmc.start_date`, we specifically identify only those customers who downgraded from pro monthly to basic monthly plan	
+
+````sql
+WITH pro_monthly_customers AS(
+	SELECT customer_id,
+			start_date
+	FROM foodie_fi.subscriptions
+	WHERE plan_id = 2
+	AND start_date BETWEEN '2020-01-01' AND '2020-12-31'
+),
+basic_monthly_customers AS(
+	SELECT customer_id,
+			start_date
+	FROM foodie_fi.subscriptions
+	WHERE plan_id = 1
+	AND start_date BETWEEN '2020-01-01' AND '2020-12-31'
+)
+SELECT COUNT(DISTINCT pmc.customer_id) AS downgraded_customers
+FROM pro_monthly_customers pmc
+JOIN basic_monthly_customers bmc ON pmc.customer_id = bmc.customer_id
+WHERE pmc.start_date < bmc.start_date
+````
+#### Solution:
+| upgrade_period | 
+|-------------|
+| 0 |
+
 
 ***
 ### Learnings
