@@ -2,9 +2,22 @@
 Subscription based businesses are super popular and Danny realised that there was a large gap in the market - he wanted to create a new streaming service that only had food related content.
 Danny launches his new startup Foodie-Fi in 2020 and started selling monthly and annual subscriptions, giving their customers unlimited on-demand access to exclusive food videos from around the world!
 
-Danny created Foodie-Fi with a data driven mindset and wanted to ensure all future investment decisions and new features were decided using data. This case study focuses on using subscription style digital data to answer important business questions.
-
 <img src="https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%203%20-%20Foodie-Fi/ref_images/3.%20Foodie-fi.png" alt="Image" width ="500" height="520">
+
+# Task
+This case study focuses on using subscription style digital data to answer important business questions.
+
+
+# Table of content
+The case study has been divided into the following parts:
+-	[ERD Diagram](#erd-diagram)
+-	[Case Study Questions with Solutions](#case-study-questions-with-solutions)
+	-	[A. Customer Journey](#a-customer-journey)
+ 	-	[B. Data Analysis Questions](#b-data-analysis-questions)
+  	-	[C. Challenge Payment Question](#c-challenge-payment-question)
+  	-	[Learnings](#learnings)
+
+***
 
 # ERD Diagram
 <img src = "https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%203%20-%20Foodie-Fi/ref_images/case-study-3-erd.png">
@@ -25,7 +38,9 @@ There are two tables in the database -
       - When customers churn - they will keep their access until the end of their current billing period but the `start_date` will be technically the day they decided to cancel their service.
 <img src = "https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%203%20-%20Foodie-Fi/ref_images/subscriptions.webp" alt="Image" width ="300" height="520">
 
-## Questions & Solutions
+***
+
+## Case Study Questions with Solutions
 
 ### A. Customer Journey
 Based off the 8 sample customers provided in the sample from the subscriptions table, write a brief description about each customer’s onboarding journey.
@@ -77,7 +92,7 @@ WHERE s.customer_id IN (1,2,11,13,15,16,18,19)
     - Customer_id: 18 - started with trial and converted it to pro monthly
     - Customer_id: 19 - started with trial and converted it to pro monthly and later changed to pro annual after two monhts 
 
-***
+
 ### B. Data Analysis Questions
 ## 1. How many customers has Foodie-Fi ever had?
 _Approach taken_
@@ -426,6 +441,15 @@ WHERE pmc.start_date < bmc.start_date
 |-------------|
 | 0 |
 
+### C. Challenge Payment Question
+The Foodie-Fi team wants you to create a new payments table for the year 2020 that includes amounts paid by each customer in the subscriptions table with the following requirements:
+
+- monthly payments always occur on the same day of month as the original start_date of any monthly paid plan
+- upgrades from basic to monthly or pro plans are reduced by the current paid amount in that month and start immediately
+- upgrades from pro monthly to pro annual are paid at the end of the current billing period and also starts at the end of the month period
+- once a customer churns they will no longer make payments
+
+This section is quite tricky and I couldn't understand it as it included `RECURSIVE CTE` as well, but I am adding a wonderful medium article written by [Eke](https://medium.com/@papa28x4) that not only covers the whole case study but also this [section](https://blog.devgenius.io/8-week-sql-challenge-case-study-3-foodie-fi-solution-d9dddf30755f)
 
 ***
 ### Learnings
