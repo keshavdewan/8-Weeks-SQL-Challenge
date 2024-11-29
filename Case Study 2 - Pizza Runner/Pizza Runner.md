@@ -192,7 +192,7 @@ SELECT 	customer_orders_temp.order_id AS order_id,
 		COUNT(pizza_names.pizza_id) AS pizza_delivered
 FROM customer_orders_temp
 JOIN pizza_runner.pizza_names ON customer_orders_temp.pizza_id = pizza_names.pizza_id 
-GROUP BY orders
+GROUP BY order_id
 ORDER  BY pizza_delivered DESC
 ````
 #### Solution:
@@ -432,10 +432,10 @@ SELECT
   ROUND(100 * SUM(
     CASE WHEN distance = 0 THEN 0
     ELSE 1 END) / COUNT(*), 0) AS success_perc
-FROM #runner_orders
+FROM runner_orders_temp
 GROUP BY runner_id
 ````
-copy-pasted!
+copy-pasted! But somehow it shows incorrect answer
 
 ## C. Ingredient Optimisation
 
@@ -564,7 +564,7 @@ VALUES
     (10, 3);
 ````
 
-### 4. Using your newly generated table — can you join all of the information together to form a table which has the following information for successful deliveries? - customer_id, order_id,runner_id,rating, order_time, pickup_time, Time between order and pickup,vDelivery duration, Average speed, Total number of pizzas
+### 4. Using your newly generated table — can you join all of the information together to form a table which has the following information for successful deliveries? - customer_id, order_id,runner_id,rating, order_time, pickup_time, Time between order and pickup, Delivery duration, Average speed, Total number of pizzas
 ````sql
 /* Using your newly generated table — 
 can you join all of the information together to form a table which 
@@ -604,7 +604,7 @@ WHERE r.cancellation = ' '
 
 ***
 ### Learnings
-##### 1. [ERD Diagram within Postgre SQL itself](#erd-diagram-directly-in-postgres)
+##### 1. ERD Diagram within Postgre SQL itself
 ##### 2. Temporary tables
 	CREATE TEMP TABLE AS
 ##### 3. TRIM in CASE Statements
