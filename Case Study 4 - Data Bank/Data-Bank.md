@@ -27,3 +27,19 @@ The Data Bank team have prepared a data model for this case study as well as a f
 
 #### Entity Relationship Diagram
 <img src= "https://cdn-images-1.medium.com/max/1100/0*jPsWpBOKuPgsG7wd.png">
+
+The Data Bank contains 3 tables:
+-  `regions` : The regions table contains the `region_id` and their respective `region_name` values
+  <img src= "https://cdn-images-1.medium.com/max/1100/1*U3HJmHTW7JsxKycvVfmG8Q.png" alt="image" width ="150" height="200">
+  
+-  `customer_nodes` : Customers are randomly distributed across the nodes according to their region - this also specifies exactly which node contains both their cash and data. Below is a sample of the top 10 rows of the `data_bank.customer_nodes`
+   <img src= "https://cdn-images-1.medium.com/max/1100/1*4XW8wyxTXaXaN8qYC3aG6A.png" alt="image" width ="400" height="300">
+   
+-  `customer_transactions` : This table stores all customer deposits, withdrawals and purchases made using their Data Bank debit card.
+  <img src= "https://cdn-images-1.medium.com/max/1100/1*uv9QnY_TaYoX-6CZeAK17Q.png" alt="image" width ="400" height="300">
+
+#### Case Study Questions with Solutions
+
+#### A. Customer Nodes Exploration
+
+
