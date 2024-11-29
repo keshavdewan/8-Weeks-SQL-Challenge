@@ -10,7 +10,7 @@ Our task will be to clean this data and apply some basic calculations so Dany ca
 # Table of contents
 The case study has been divided into different question categories that includes the following:
   - [ERD Diagram](#erd-diagram)
-  - [Data Cleaning and Transformation](#data-cleaning-transformation)
+  - [Data Cleaning and Transformation](#data-cleaning-and-transformation)
 	  - [A. Pizza Metrics](#a-pizza-metrics)
 	  - [B. Runner and Customer Experience](#b-runner-and-customer-experience)
 	  - [C. Ingredient Optimisation](#c-ingredient-optimisation)
@@ -109,17 +109,19 @@ ALTER TABLE runner_orders_temp
 ## A. Pizza Metrics
 
 ### 1. How many pizzas were ordered?
+````sql
 SELECT COUNT(*) AS total_pizzas
 FROM customer_orders_temp
-
+````
 | pizzas |
  -----------  |
 | 14        | 
 
 ### 2. How many unique customer orders were made?
+````sql
 SELECT COUNT(DISTINCT(order_id))
 FROM customer_orders_temp
-
+````
 #### Solution:
 | successful_orders |
  -----------  |
@@ -127,12 +129,13 @@ FROM customer_orders_temp
 
 
 ### 3. How many successful orders were delivered by each runner?
+````sql
 SELECT runner_id,
 		COUNT(*) AS successful_orders
 FROM runner_orders_temp 
 WHERE cancellation = ' '
 GROUP BY runner_orders_temp.runner_id
-
+````
 #### Solution:
 | runner_id | successful_orders |
 | ----------- | -----------  |
