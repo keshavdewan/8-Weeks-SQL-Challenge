@@ -89,7 +89,7 @@ GROUP BY r.region_id,
 #### 4. How many days on average are customers reallocated to a different node?
 _Approach Taken_
   - We used here `AVG(end_date - start_date)
-  - There is an abnormal date in the data - '9999-12-31`, we have to filter it using the `WHERE` commands
+  - There is an abnormal date in the data - '9999-12-31', we have to filter it using the `WHERE` commands
 
 ````sql
 SELECT 
@@ -133,6 +133,64 @@ ORDER BY region_name
 *copy pasted
 
 ![image](https://github.com/user-attachments/assets/054f3cb2-d1bb-4ce3-b617-ad4f7c078307)
+
+### B. Customer Transactions
+
+#### 1. What is the unique count and total amount for each transaction type?
+_Approach Taken_
+-	`COUNT(customer_id)` and also `SUM(txn_amount)` for this case
+
+````sql
+SELECT txn_type,
+		COUNT(customer_id) AS transaction_count,
+		SUM(txn_amount) AS total_amt
+FROM data_bank.customer_transactions
+GROUP BY txn_type
+````
+![image](https://github.com/user-attachments/assets/4b78c284-1f66-4f6f-a16a-4d2526386843)
+
+#### 2. What is the average total historical deposit counts and amounts for all customers?
+_Approach Taken_
+-	count the customers and round them for their average
+
+````sql
+WITH deposit AS(
+		SELECT customer_id,
+				COUNT(customer_id) AS deposit_count,
+				ROUND(AVG(txn_amount),0) AS avg_deposits
+		FROM data_bank.customer_transactions
+		WHERE txn_type = 'deposit'
+		GROUP BY customer_id
+)
+SELECT ROUND(AVG(deposit_count),0) AS avg_count,
+		ROUND(AVG(avg_deposits),0) AS avg_deposit
+FROM deposit
+````
+![image](https://github.com/user-attachments/assets/22a3ed05-9d15-4480-b318-98060c684adf)
+
+#### 3. For each month - how many Data Bank customers make more than 1 deposit and either 1 purchase or 1 withdrawal in a single month?
+_Approach Taken_
+-	
+````sql
+WITH monthly_transaction AS(
+				SELECT 	EXTRACT (MONTH FROM txn_date) AS month,
+						customer_id,
+						SUM(CASE WHEN txn_type = 'deposit' THEN 1 ELSE 0 END) as deposits_count,
+						SUM(CASE WHEN txn_type = 'purchase' THEN 1 ELSE 0 END) as purchase_count,
+						SUM(CASE WHEN txn_type = 'withdrawl' THEN 1 ELSE 0 END) as withdrawl_count
+				FROM data_bank.customer_transactions
+				GROUP BY month, customer_id
+)
+SELECT 	month,
+		COUNT(customer_id)
+FROM monthly_transaction
+WHERE deposits_count >=1 AND
+		(purchase_count >=1 OR withdrawl_count >=1)
+GROUP BY month
+ORDER BY month
+````
+
+![image](https://github.com/user-attachments/assets/3c31271f-abff-4916-8589-5a50803300b3)
 
 
 ***
