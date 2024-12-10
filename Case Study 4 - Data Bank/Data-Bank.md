@@ -170,27 +170,110 @@ FROM deposit
 
 #### 3. For each month - how many Data Bank customers make more than 1 deposit and either 1 purchase or 1 withdrawal in a single month?
 _Approach Taken_
--	
+-	CTE `monthly_transaction` creates `CASE` statement with `txn_type` as 'deposit', 'purchase' and 'withdrawl'
+-	In the final SELECT statement we filter using `WHERE`  statement to get the customer numbers
+  
 ````sql
-WITH monthly_transaction AS(
-				SELECT 	EXTRACT (MONTH FROM txn_date) AS month,
-						customer_id,
-						SUM(CASE WHEN txn_type = 'deposit' THEN 1 ELSE 0 END) as deposits_count,
-						SUM(CASE WHEN txn_type = 'purchase' THEN 1 ELSE 0 END) as purchase_count,
-						SUM(CASE WHEN txn_type = 'withdrawl' THEN 1 ELSE 0 END) as withdrawl_count
-				FROM data_bank.customer_transactions
-				GROUP BY month, customer_id
+WITH bank_customers AS(
+		SELECT EXTRACT(MONTH FROM txn_date) AS month,
+				customer_id,
+				SUM(CASE WHEN txn_type = 'deposit' THEN 1 ELSE 0 END) AS deposit_count,
+				SUM(CASE WHEN txn_type = 'purchase' THEN 1 ELSE 0 END) AS purchase_count,
+				SUM(CASE WHEN txn_type = 'withdrawl' THEN 1 ELSE 0 END) AS withdrawl_count
+		FROM data_bank.customer_transactions
+		GROUP BY month,customer_id
 )
-SELECT 	month,
-		COUNT(customer_id)
-FROM monthly_transaction
-WHERE deposits_count >=1 AND
-		(purchase_count >=1 OR withdrawl_count >=1)
+SELECT month,
+		COUNT(customer_id) AS cust_count
+FROM bank_customers
+WHERE deposit_count >= 1 AND
+	(purchase_count >= 1 OR withdrawl_count >= 1)
 GROUP BY month
 ORDER BY month
 ````
 
-![image](https://github.com/user-attachments/assets/3c31271f-abff-4916-8589-5a50803300b3)
+![image](https://github.com/user-attachments/assets/cec9e977-a786-4261-bf3f-191474b93954)
+
+#### 4. What is the closing balance for each customer at the end of the month? Also show the change in balance each month in the same table output.
+_Approach Taken_
+-	CTE `monthlychanges` calculates the `monthly_change` in balance for each customer every month
+-	Final `SELECT` statement calculates the `SUM` of `closing_balance` partitioned by `customer_id` and ordered by `month`  
+
+````sql
+WITH monthlychanges AS (
+    SELECT 
+        customer_id,
+        EXTRACT(MONTH FROM txn_date) AS month,
+        SUM(CASE 
+            WHEN txn_type = 'deposit' THEN txn_amount
+            WHEN txn_type IN ('purchase', 'withdrawal') THEN -txn_amount
+            ELSE 0 
+            END) AS monthly_change
+    FROM 
+        data_bank.customer_transactions
+    GROUP BY 
+        customer_id, EXTRACT(MONTH FROM txn_date)
+)
+SELECT 
+    mc.customer_id,
+    mc.month,
+    SUM(mc.monthly_change) OVER (PARTITION BY mc.customer_id ORDER BY mc.month) AS closing_balance,
+    mc.monthly_change
+FROM 
+    monthlychanges mc
+ORDER BY 
+    mc.customer_id, mc.month
+````
+
+![image](https://github.com/user-attachments/assets/b2fe16de-20bb-4f65-8226-2f64b3d5eddb)
+
+#### 5. What is the percentage of customers who increase their closing balance by more than 5%?
+_Approach taken_
+-	CTE `MonthlyChanges` calculates the monthly changes in balance
+-	CTE `ClosingBalances` calculates the `closing_balance` for each month
+-	CTE `LaggedBalances` calcultes the closing balance from previous month for each customer
+-	Final statement counts how many customers had a significant increase in their balance and divide that by the total number of customers to get a percentage
+
+````sql
+WITH MonthlyChanges AS (
+    SELECT 
+        customer_id,
+        EXTRACT(MONTH FROM txn_date) AS month,
+        SUM(CASE 
+            WHEN txn_type = 'deposit' THEN txn_amount
+            WHEN txn_type IN ('purchase', 'withdrawal') THEN -txn_amount
+            ELSE 0 
+            END) AS monthly_change
+    FROM 
+        data_bank.customer_transactions
+    GROUP BY 
+        customer_id, EXTRACT(MONTH FROM txn_date)
+), 
+ClosingBalances AS (
+  SELECT 
+        mc.customer_id,
+        mc.month,
+        SUM(mc.monthly_change) OVER (PARTITION BY mc.customer_id ORDER BY mc.month) AS closing_balance
+  FROM MonthlyChanges mc  
+),
+LaggedBalances AS ( -- Separate CTE to apply LAG()
+  SELECT 
+    cb.customer_id,
+    cb.month,
+    cb.closing_balance,
+    LAG(cb.closing_balance) OVER (PARTITION BY cb.customer_id ORDER BY cb.month) AS previous_closing_balance
+FROM ClosingBalances cb
+)
+SELECT 
+    CAST(COUNT(CASE WHEN closing_balance > previous_closing_balance * 1.05 THEN customer_id END) AS DECIMAL) * 100 / COUNT(customer_id) AS percentage
+FROM 
+    LaggedBalances
+WHERE 
+    previous_closing_balance IS NOT NULL
+````
+*copy pasted
+
+![image](https://github.com/user-attachments/assets/ea72b8de-46ed-4c40-84d3-048be1ffbe5f)
 
 
 ***
@@ -199,4 +282,5 @@ ORDER BY month
 #### 1. Percentile
 -  `PERCENTILE_CONT()` is a function that calculates percentiles.
 -  `WITHIN GROUP (ORDER BY reallocation_days)` specifies the data to use and how to order it.
--  `OVER (PARTITION BY region_name)` calculates percentiles separately for each region.
+-  `OVER (PARTITION BY region_name)` calculates percentiles separately for each region.\
+-  `LAG` allows you to access data from a previous row in the same result set. It's like having a peek at the row "above" the current one.
