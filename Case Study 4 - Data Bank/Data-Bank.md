@@ -1,4 +1,4 @@
-# Case Study 4 - Data Bank
+# Case Study 4 - Data Bank 🏛️
 
 ## Introduction
 Danny has decided to get into the business of Neo-banks: new aged digital only banks without physical branches.
@@ -19,7 +19,9 @@ This case study focuses on using data analysis to help Data Bank achieve these g
 -  [Case Study Questions with Solutions](#case-study-questions-with-solutions)
 -  [A. Customer Nodes Exploration](#customer-nodes-exploration)
 -  [B. Customer Transactions](#customer-transactions)
--  [C. ](#)
+-  [C. Data Allocation Challenge](#data-allocation-challenge)
+-  [D. Extra Challenge](#extra-challenges)
+-  [Learnings](#learnings)
 
 
 ***
@@ -290,6 +292,144 @@ To test out a few different hypotheses - the Data Bank team wants to run an expe
 For this multi-part challenge question - you have been requested to generate the following data elements to help the Data Bank team estimate how much data will need to be provisioned for each option:
 
 #### 1. Running customer balance column that includes the impact each transaction
+_Approach Taken_
+-	Use `CASE` statement to sum the `txn_type` i.e. deposit, withdrawal, purchase
+-	Use `PARTITION BY` to calculate the `running_balance` that reflects the impace of each transaction on customer's balance
+
+````sql
+SELECT customer_id,
+		txn_date,
+		txn_type,
+		txn_amount,
+		SUM(CASE 
+				WHEN txn_type = 'deposit' THEN txn_amount 
+				WHEN txn_type IN ('withdrawal', 'purchase') THEN -txn_amount
+				ELSE 0
+			END) OVER(PARTITION BY customer_id ORDER BY txn_date) AS running_balance
+FROM data_bank.customer_transactions
+````
+![image](https://github.com/user-attachments/assets/d244eedd-6405-4431-bbbb-219ff636d5b7)
+
+#### 2. Customer balance at the end of each month
+_Approach Taken_
+-	CTE `monthlybalance` calculates the `monthly_change` of balance for each customer
+-	Final SELECT statement uses `SUM() OVER()` functionality to calculate the running total monthly for each customer and giving the balance at the end of every month
+
+````sql
+WITH monthlybalance AS(
+		SELECT customer_id,
+				EXTRACT(MONTH FROM txn_date) AS month,
+						SUM(CASE 
+							WHEN txn_type = 'deposit' THEN txn_amount 
+							WHEN txn_type IN ('withdrawal', 'purchase') THEN -txn_amount
+							ELSE 0
+						END) AS monthly_change
+		FROM data_bank.customer_transactions
+		GROUP BY customer_id, month
+		)
+SELECT mb.customer_id,
+		mb.month,
+		SUM(mb.monthly_change) OVER (PARTITION BY mb.customer_id
+										ORDER BY mb.month) AS closing_balance
+FROM monthlybalance mb
+ORDER BY mb.customer_id, mb.month
+		
+````
+![image](https://github.com/user-attachments/assets/ab88d2b9-33d1-4d59-9062-344165f98e46)
+
+#### 3. Minimum, average and maximum values of the running balance for each customer
+_Approach Taken_
+-	CTE `runningbalance` calculates the running balance every month
+-	Final SELECT statement calculates the min, average and maximum values for the running balance 
+
+````sql
+WITH runningbalance AS(
+		SELECT customer_id,
+				txn_date,
+				SUM(CASE 
+						WHEN txn_type = 'deposit' THEN txn_amount 
+						WHEN txn_type IN ('withdrawal', 'purchase') THEN -txn_amount
+						ELSE 0
+						END) OVER (PARTITION BY customer_id
+									ORDER BY txn_date) AS running_balance
+		FROM data_bank.customer_transactions
+		)
+SELECT 	customer_id,
+		MIN(running_balance) AS minimum_balance,
+		AVG(running_balance) AS avg_balance,
+		MAX(running_balance) AS max_balance
+FROM runningbalance
+GROUP BY customer_id
+ORDER BY customer_id
+````
+![image](https://github.com/user-attachments/assets/9606f9d5-7e6a-482b-b270-8047c63f709a)
+
+***
+
+### D. Extra Challenge
+Data Bank wants to try another option which is a bit more difficult to implement - they want to calculate data growth using an interest calculation, just like in a traditional savings account you might have with a bank.
+
+If the annual interest rate is set at 6% and the Data Bank team wants to reward its customers by increasing their data allocation based off the interest calculated on a daily basis at the end of each day, how much data would be required for this option on a monthly basis?
+
+_Special notes:_
+Data Bank wants an initial calculation which does not allow for compounding interest, however they may also be interested in a daily compounding interest calculation so you can try to perform this calculation if you have the stamina!
+
+_Approach Taken_
+-	CTE `DailyBalances` Calculate the running balance for each customer for each day
+-	CTE `DailyInterest`Calculate the daily interest for each customer
+-	CTE `MonthlyInterest` Aggregate the daily interest to get the monthly interest for each customer
+-	Final `SELECT` Statement Calculate the total data required for each customer for each month based on the monthly interest
+
+
+````sql
+WITH DailyBalances AS (
+    SELECT 
+        customer_id,
+        txn_date,
+        SUM(CASE 
+            WHEN txn_type = 'deposit' THEN txn_amount
+            WHEN txn_type IN ('purchase', 'withdrawal') THEN -txn_amount
+            ELSE 0 
+            END) OVER (PARTITION BY customer_id ORDER BY txn_date) AS running_balance
+    FROM 
+        data_bank.customer_transactions
+),
+DailyInterest AS (
+    SELECT 
+        customer_id,
+        txn_date,
+        running_balance,
+        running_balance * (0.06 / 365) AS daily_interest  -- 6% annual interest divided by 365 days
+    FROM 
+        DailyBalances
+),
+MonthlyInterest AS (
+    SELECT 
+        customer_id,  -- Include customer_id here
+        EXTRACT(MONTH FROM txn_date) AS month,
+        SUM(daily_interest) AS total_monthly_interest
+    FROM 
+        DailyInterest
+    GROUP BY 
+        customer_id, EXTRACT(MONTH FROM txn_date)  -- Group by customer_id as well
+)
+SELECT 
+    customer_id,  -- Select customer_id
+    month,
+    SUM(total_monthly_interest) AS total_data_required
+FROM 
+    MonthlyInterest
+GROUP BY 
+    customer_id, month  -- Group by customer_id and month
+ORDER BY 
+    customer_id, month
+````
+*used AI for this
+
+![image](https://github.com/user-attachments/assets/6ea55edf-7cd3-406f-aa39-96cf3be48625)
+
+
+
 
 ***
 ### Learnings
@@ -305,3 +445,5 @@ For this multi-part challenge question - you have been requested to generate the
 		-	`default_value`: (Optional) The value to return if there is no previous row (e.g., for the first row in the partition).
 		-	`PARTITION BY partition_expression`: (Optional) Divides the result set into groups (partitions) and applies the LAG() function separately within each partition.
 		-	`ORDER BY order_expression`: Specifies how the rows are ordered within each partition to determine which row is "previous."
+
+-	`SUM() OVER()` for Running Totals: The `SUM() OVER()` window function is specifically designed for calculating running totals. It adds up the values in a specified column as it moves through the rows, effectively giving you the running balance at each point.
