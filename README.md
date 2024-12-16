@@ -13,7 +13,7 @@ Check my medium article [8 Week SQL Challenge](https://medium.com/p/81aba90fd2d0
   - 🍜[Case Study 1 - Danny's Diner](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/808fb348107ed9064c9848e2af9068476642735a/Case%20Study%201%20-%20Dany's%20Diner/Case%20Study%201%20-%20Dany's%20Diner.md)
   - 🍕[Case Study 2 - Pizza Runnner](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%202%20-%20Pizza%20Runner/Pizza%20Runner.md)
   - 🥑[Case Study 3 - Foodie-Fi](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%203%20-%20Foodie-Fi/Foodie-Fi.md)
-  - 🏛️[Case Study 4 - Data Bank]()
+  - 🏛️[Case Study 4 - Data Bank](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%204%20-%20Data%20Bank/Data-Bank.md#d-extra-challenge)
   - 🛒[Case Study 5 - Data Mart]()
   - 🎣[Case Study 6 - Clique Bait]()
   - 👕[Case Study 7 - Balanced Tree Clothing Co.]()
