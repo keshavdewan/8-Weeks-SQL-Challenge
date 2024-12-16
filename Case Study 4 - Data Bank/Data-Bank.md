@@ -17,12 +17,11 @@ This case study focuses on using data analysis to help Data Bank achieve these g
 ## Table of content
 -  [ERD Diagram](#erd-diagram)
 -  [Case Study Questions with Solutions](#case-study-questions-with-solutions)
--  [A. Customer Nodes Exploration](#customer-nodes-exploration)
--  [B. Customer Transactions](#customer-transactions)
--  [C. Data Allocation Challenge](#data-allocation-challenge)
--  [D. Extra Challenge](#extra-challenges)
+-  [A. Customer Nodes Exploration](#a-customer-nodes-exploration)
+-  [B. Customer Transactions](#b-customer-transactions)
+-  [C. Data Allocation Challenge](#c-data-allocation-challenge)
+-  [D. Extra Challenge](#d-extra-challenge)
 -  [Learnings](#learnings)
-
 
 ***
 
