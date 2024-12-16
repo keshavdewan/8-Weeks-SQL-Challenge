@@ -18,4 +18,7 @@ Check my medium article [8 Week SQL Challenge](https://medium.com/p/81aba90fd2d0
   - 🎣[Case Study 6 - Clique Bait]()
   - 👕[Case Study 7 - Balanced Tree Clothing Co.]()
   - 🍊[Case Study 8 - Fresh Segments]()
+
+  - # Learnings
+    Common Table Expressions (CTEs), Subqueries, Ranking, Datetime formatting, NULLs, Type conversions, Text manipulation, Case Statements,Running sums and conditional aggregations, Median and Percentile
     
