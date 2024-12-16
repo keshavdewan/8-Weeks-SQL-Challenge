@@ -134,6 +134,8 @@ ORDER BY region_name
 
 ![image](https://github.com/user-attachments/assets/054f3cb2-d1bb-4ce3-b617-ad4f7c078307)
 
+***
+
 ### B. Customer Transactions
 
 #### 1. What is the unique count and total amount for each transaction type?
@@ -256,7 +258,7 @@ ClosingBalances AS (
         SUM(mc.monthly_change) OVER (PARTITION BY mc.customer_id ORDER BY mc.month) AS closing_balance
   FROM MonthlyChanges mc  
 ),
-LaggedBalances AS ( -- Separate CTE to apply LAG()
+LaggedBalances AS 
   SELECT 
     cb.customer_id,
     cb.month,
@@ -275,6 +277,19 @@ WHERE
 
 ![image](https://github.com/user-attachments/assets/ea72b8de-46ed-4c40-84d3-048be1ffbe5f)
 
+***
+
+### C. Data Allocation Challenge
+
+To test out a few different hypotheses - the Data Bank team wants to run an experiment where different groups of customers would be allocated data using 3 different options:
+
+**Option 1**: data is allocated based off the amount of money at the end of the previous month
+**Option 2**: data is allocated on the average amount of money kept in the account in the previous 30 days
+**Option 3**: data is updated real-time
+
+For this multi-part challenge question - you have been requested to generate the following data elements to help the Data Bank team estimate how much data will need to be provisioned for each option:
+
+#### 1. Running customer balance column that includes the impact each transaction
 
 ***
 ### Learnings
@@ -282,5 +297,11 @@ WHERE
 #### 1. Percentile
 -  `PERCENTILE_CONT()` is a function that calculates percentiles.
 -  `WITHIN GROUP (ORDER BY reallocation_days)` specifies the data to use and how to order it.
--  `OVER (PARTITION BY region_name)` calculates percentiles separately for each region.\
+-  `OVER (PARTITION BY region_name)` calculates percentiles separately for each region.
 -  `LAG` allows you to access data from a previous row in the same result set. It's like having a peek at the row "above" the current one.
+	-  	`LAG(expression, offset, default_value) OVER (PARTITION BY partition_expression ORDER BY order_expression)`
+	 	-  	`expression`: The column or expression you want to get the value from the previous row.
+		-	`offset`: (Optional) How many rows back you want to look. The default is 1 (the immediate previous row).
+		-	`default_value`: (Optional) The value to return if there is no previous row (e.g., for the first row in the partition).
+		-	`PARTITION BY partition_expression`: (Optional) Divides the result set into groups (partitions) and applies the LAG() function separately within each partition.
+		-	`ORDER BY order_expression`: Specifies how the rows are ordered within each partition to determine which row is "previous."
