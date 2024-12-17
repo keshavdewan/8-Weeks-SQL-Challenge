@@ -15,10 +15,10 @@ For this task we will have to analyse the sales performance and also quantify th
 The case study has been divided into the following parts:
 -  [ERD Diagram](#erd-diagram)
 -	[Case Study Questions with Solutions](#case-study-questions-with-solutions)
-	-	[1. Data Cleansing Steps](#1-data-cleansing-steps)
-   	- [2. Data Exploration](#2-data-exploration)
-    -  [3. Before & After Analysis](#3-before-&-after-analysis)
-    - [4. Bonus Question](#4-bonus-question)
+	-	[A. Data Cleansing Steps](#a-data-cleansing-steps)
+   	- [B. Data Exploration](#b-data-exploration)
+    -  [C. Before & After Analysis](#c-before-&-after-analysis)
+    - [D. Bonus Question](#d-bonus-question)
 -  [Learnings](#learnings)
 ***
 # ERD Diagram
@@ -37,7 +37,7 @@ Each record in the dataset is related to a specific aggregated slice of the unde
 
 # Case Study Questions with Solutions
 
-## 1. Data Cleansing Steps
+## A. Data Cleansing Steps
 In a single query, perform the following operations and generate a new table in the `data_mart` schema named `clean_weekly_sales`:
 -  Convert the `week_date` to a `DATE` format
 -  Add a `week_numbe`r as the second column for each `week_date` value, for example any value from the 1st of January to 7th of January will be 1, 8th to 14th will be 2 etc
@@ -53,5 +53,90 @@ olumn as the 4th column containing either 2018, 2019 or 2020 values
 -  Ensure all `null` string values with an `unknown` string value in the original `segment` column as well as the new `age_band` and `demographic` columns
 -  Generate a new `avg_transaction` column as the `sales` value divided by `transactions` rounded to 2 decimal places for each record
 
-### New Column
+### New Table 'clean_weekly_sales`:
+````sql
+CREATE TABLE data_mart.clean_weekly_sales AS
+	SELECT TO_DATE(week_date, 'DD/MM/YY') AS week_date,
+			EXTRACT(WEEK FROM TO_DATE(week_date, 'DD/MM/YYYY')) AS week_number,
+			EXTRACT(MONTH FROM TO_DATE(week_date, 'DD/MM/YYYY')) AS month_number,
+			EXTRACT(YEAR FROM TO_DATE(week_date, 'DD/MM/YYYY')) AS calendar_year,
+			region,
+			platform,
+			segment,
+			CASE 
+				WHEN RIGHT(segment,1) = '1' THEN 'Young Adults'
+				WHEN RIGHT(segment,2) = '2' THEN 'Middle Aged'
+				WHEN RIGHT(segment,1) IN ('3', '4') THEN 'Retirees'
+				ELSE 'Unknown'
+			END AS age_band,
+			CASE 
+				WHEN LEFT(segment,1) = 'C' THEN 'Couples'
+				WHEN LEFT(segment,2) = 'F' THEN 'Families'
+				ELSE 'Unknown'
+			END AS demographic,
+			transactions,
+			sales,
+			ROUND((sales::numeric/transactions),2) AS avg_transaction
+FROM data_mart.weekly_sales
+GROUP BY
+    week_date,
+    week_number,
+    month_number,
+    calendar_year,
+    region,
+    platform,
+    segment,
+    age_band,
+    demographic,
+    transactions,
+    sales
 
+````
+## B. Data Exploration
+
+### 1. What day of the week is used for each week_date value?
+_Approach Taken_
+-	Use `DISTINCT` and `TO_CHAR` functios to get the day of the week
+
+````sql
+SELECT DISTINCT(TO_CHAR(week_date, 'day')) AS week_day 
+FROM clean_weekly_sales
+````
+
+### 2.What range of week numbers are missing from the dataset?
+_Approach Taken_
+-	CTE 'week_number_cte`, use `GENERATE_SERIES` function to generate `week_number` from 1 to 52
+-	`LEFT JOIN` the CTE with `clean_weekly_sales` table to get the missing numbers
+
+````sql
+WITH week_number_cte AS (
+		SELECT GENERATE_SERIES(1,52) AS week_number
+		)
+SELECT DISTINCT wn.week_number
+FROM week_number_cte wn
+LEFT JOIN clean_weekly_sales cws ON wn.week_number = cws.week_number
+WHERE cws.week_number IS NULL
+````
+![image](https://github.com/user-attachments/assets/fda1e5b6-2c26-4756-86fc-0cfbdf8ca052)
+
+### 3. How many total transactions were there for each year in the dataset?
+_Approach Taken_
+-	Use `SUM` to calculate the toal transactions and `GROUP BY` for grouping them with the years
+
+````sql
+SELECT calendar_year,
+		SUM(transactions) AS total_transactions
+FROM clean_weekly_sales
+GROUP BY calendar_year
+ORDER BY calendar_year
+````
+![image](https://github.com/user-attachments/assets/2f02bb78-5e7e-43d2-994c-cd731905349a)
+
+### 4. What is the total sales for each region for each month?
+
+
+***
+# Learnings
+-	`To_DATE` converts text onto a valid date object
+-	'To_CHAR` formats the date for display purpose
+	-	Example	`TO_CHAR(TO_DATE(week_date, 'DD/MM/YY'), 'DD/MM/YYYY') AS formatted_week_date`
