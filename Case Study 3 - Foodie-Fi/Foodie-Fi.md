@@ -15,7 +15,7 @@ The case study has been divided into the following parts:
 	-	[A. Customer Journey](#a-customer-journey)
  	-	[B. Data Analysis Questions](#b-data-analysis-questions)
   	-	[C. Challenge Payment Question](#c-challenge-payment-question)
-  	-	[Learnings](#learnings)
+-	[Learnings](#learnings)
 
 ***
 
