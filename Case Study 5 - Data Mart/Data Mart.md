@@ -57,21 +57,21 @@ olumn as the 4th column containing either 2018, 2019 or 2020 values
 ````sql
 CREATE TABLE data_mart.clean_weekly_sales AS
 	SELECT TO_DATE(week_date, 'DD/MM/YY') AS week_date,
-			EXTRACT(WEEK FROM TO_DATE(week_date, 'DD/MM/YYYY')) AS week_number,
-			EXTRACT(MONTH FROM TO_DATE(week_date, 'DD/MM/YYYY')) AS month_number,
-			EXTRACT(YEAR FROM TO_DATE(week_date, 'DD/MM/YYYY')) AS calendar_year,
+			EXTRACT(WEEK FROM TO_DATE(week_date, 'DD/MM/YY')) AS week_number,
+			EXTRACT(MONTH FROM TO_DATE(week_date, 'DD/MM/YY')) AS month_number,
+			EXTRACT(YEAR FROM TO_DATE(week_date, 'DD/MM/YY')) AS calendar_year,
 			region,
 			platform,
 			segment,
 			CASE 
 				WHEN RIGHT(segment,1) = '1' THEN 'Young Adults'
-				WHEN RIGHT(segment,2) = '2' THEN 'Middle Aged'
+				WHEN RIGHT(segment,1) = '2' THEN 'Middle Aged'
 				WHEN RIGHT(segment,1) IN ('3', '4') THEN 'Retirees'
 				ELSE 'Unknown'
 			END AS age_band,
 			CASE 
 				WHEN LEFT(segment,1) = 'C' THEN 'Couples'
-				WHEN LEFT(segment,2) = 'F' THEN 'Families'
+				WHEN LEFT(segment,1) = 'F' THEN 'Families'
 				ELSE 'Unknown'
 			END AS demographic,
 			transactions,
@@ -125,7 +125,7 @@ _Approach Taken_
 
 ````sql
 SELECT calendar_year,
-		SUM(transactions) AS total_transactions
+	SUM(transactions) AS total_transactions
 FROM clean_weekly_sales
 GROUP BY calendar_year
 ORDER BY calendar_year
@@ -133,7 +133,128 @@ ORDER BY calendar_year
 ![image](https://github.com/user-attachments/assets/2f02bb78-5e7e-43d2-994c-cd731905349a)
 
 ### 4. What is the total sales for each region for each month?
+_Approach Taken_
+-	use of `SUM` function for sales and `GROUP BY` & `ORDER BY`  
 
+````sql
+SELECT region,
+		month_number,
+		SUM(sales)
+FROM data_mart.clean_weekly_sales
+GROUP BY region, month_number
+````
+![image](https://github.com/user-attachments/assets/355a3479-2e95-4831-b4a6-6d7938e63ad2)
+
+### 5. What is the total count of transactions for each platform
+_Approach Taken_
+-	use of `SUM` for transactions
+
+````sql
+SELECT 	platform,
+	SUM(transactions) AS total_transactions
+FROM clean_weekly_sales
+GROUP BY platform
+````
+_sample rows_
+![image](https://github.com/user-attachments/assets/8a038dc1-71bf-467f-ae18-436c9b7fa33f)
+
+### 6. What is the percentage of sales for Retail vs Shopify for each month?
+_Approach Taken_
+-	CTE 'monthlysales`, calculates the total sales for each platform ('Retail' and 'Shopify') for each month
+-	CTE `totalmonthlysales`, calculates the total sales for each month, regardless of the platform.
+-	Final `SELECT` statement joins the two CTEs and calculates the percentage of sales for each platform in each month by dividing the platform-specific sales by the total monthly sales
+
+````sql
+WITH monthlysales AS(
+		SELECT month_number,
+				platform,
+				SUM(sales) AS monthly_sales
+		FROM clean_weekly_sales
+		GROUP BY month_number, platform
+),
+totalmonthlysales AS (
+		SELECT month_number,
+				SUM(sales) AS total_sales
+		FROM clean_weekly_sales
+		GROUP BY month_number
+)
+SELECT ms.month_number,
+		ms.platform,
+		ROUND((ms.monthly_sales * 100.0) / tms.total_sales,2) AS percent_sales
+FROM monthlysales ms
+JOIN totalmonthlysales tms ON ms.month_number = tms.month_number
+ORDER BY ms.month_number, ms.platform
+````
+![image](https://github.com/user-attachments/assets/c36706a2-5b58-4686-8560-ed1796957d23)
+
+### 7. What is the percentage of sales by demographic for each year in the dataset?
+_Approach Taken_
+-	This query follows similar approach to what we did in the previous query
+-	This time we just replaced `month_number` with `calendar_year` and `platform` with `demographic`
+
+````sql
+WITH yearlysales AS(
+		SELECT calendar_year,
+				demographic,
+				SUM(sales) AS yearly_sales
+		FROM clean_weekly_sales
+		GROUP BY calendar_year, demographic
+),
+totalyearlysales AS (
+		SELECT calendar_year,
+				SUM(sales) AS total_sales
+		FROM clean_weekly_sales
+		GROUP BY calendar_year
+)
+SELECT ys.calendar_year,
+		ys.demographic,
+		ROUND((ys.yearly_sales * 100.0) / tys.total_sales,2) AS percent_sales
+FROM yearlysales ys
+JOIN totalyearlysales tys ON ys.calendar_year = tys.calendar_year
+ORDER BY ys.calendar_year, ys.demographic
+````
+
+![image](https://github.com/user-attachments/assets/31173909-cfae-4aa2-9dc1-f36b2081e367)
+
+
+### 8. Which age_band and demographic values contribute the most to Retail sales?
+_Approach Taken_
+-	used `SUM` of sales and filtered it with `WHERE` clause for getting the `age_band` and `demographic` with max retail sales
+
+````sql
+SELECT age_band,
+	demographic,
+	SUM(sales) AS total_sales
+FROM clean_weekly_sales
+WHERE platform = 'Retail'
+GROUP BY age_band, demographic
+ORDER BY total_sales DESC
+LIMIT 1
+````
+![image](https://github.com/user-attachments/assets/3859831a-bfe5-4037-afce-ecae1e032dbf)
+
+### 9. Can we use the avg_transaction column to find the average transaction size for each year for Retail vs Shopify? If not - how would you calculate it instead?
+_Approach Taken_
+-	calculated `avg_transaction_row` and `avg_transaction_group`
+-	`avg_transaction_row` calculates the average transaction size by dividing the sales of each row by the number of transactions in that row.
+-	On the other hand, avg_transaction_group calculates the average transaction size by dividing the total sales for the entire dataset by the total number of transactions.
+For finding the average transaction size for each year by platform accurately, it is recommended to use `avg_transaction_group`
+
+*copied solution
+
+````sql
+SELECT calendar_year,
+		platform,
+		ROUND(AVG(avg_transaction),0) AS avg_transaction_row,
+		ROUND(SUM(sales)/SUM(transactions),0) AS avg_transaction_group
+FROM clean_weekly_sales
+GROUP BY calendar_year,
+	platform
+ORDER BY calendar_year
+````
+![image](https://github.com/user-attachments/assets/66277c3c-67c2-4cdb-a9c3-5c4d6b6e260d)
+
+## C. Before & After Analysis
 
 ***
 # Learnings
