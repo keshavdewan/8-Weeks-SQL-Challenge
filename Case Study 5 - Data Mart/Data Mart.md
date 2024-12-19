@@ -160,7 +160,7 @@ _sample rows_
 
 ### 6. What is the percentage of sales for Retail vs Shopify for each month?
 _Approach Taken_
--	CTE 'monthlysales`, calculates the total sales for each platform ('Retail' and 'Shopify') for each month
+-	CTE `monthlysales`, calculates the total sales for each platform ('Retail' and 'Shopify') for each month
 -	CTE `totalmonthlysales`, calculates the total sales for each month, regardless of the platform.
 -	Final `SELECT` statement joins the two CTEs and calculates the percentage of sales for each platform in each month by dividing the platform-specific sales by the total monthly sales
 
@@ -255,7 +255,163 @@ ORDER BY calendar_year
 ![image](https://github.com/user-attachments/assets/66277c3c-67c2-4cdb-a9c3-5c4d6b6e260d)
 
 ## C. Before & After Analysis
+This technique is usually used when we inspect an important event and want to inspect the impact before and after a certain point in time.
+Taking the `week_date` value of `2020-06-15` as the baseline week where the Data Mart sustainable packaging changes came into effect.
+We would include all `week_date` values for `2020-06-15` as the start of the period after the change and the previous `week_date` values would be before
 
+Using this analysis approach - answer the following questions:
+### 1. What is the total sales for the 4 weeks before and after `2020-06-15`? What is the growth or reduction rate in actual values and percentage of sales?
+_Approach Taken_
+-	CTE `weeklysales` calculates the `SUM` of sales 4 weeks before and after `2020-06-15` using `CASE` statements within `SUM()` function
+-	Final `SELECT` statement calculates `sales_variance` and `variance_percentage`
+
+````sql
+WITH weeklysales AS (
+    SELECT 
+        week_number,
+        SUM(CASE WHEN week_number BETWEEN 21 AND 24 THEN sales ELSE 0 END) AS sales_before,
+        SUM(CASE WHEN week_number BETWEEN 25 AND 28 THEN sales ELSE 0 END) AS sales_after
+    FROM data_mart.clean_weekly_sales
+    WHERE calendar_year = 2020 AND week_number BETWEEN 21 AND 28
+    GROUP BY week_number
+)
+SELECT 
+    SUM(sales_after) - SUM(sales_before) AS sales_variance,
+    ROUND(100 * (SUM(sales_after) - SUM(sales_before)) / SUM(sales_before), 2) AS variance_percentage
+FROM weeklysales	
+````
+![image](https://github.com/user-attachments/assets/2090b569-d808-41f4-9afd-f2e2c68e26e0)
+
+
+### 2. What about the entire 12 weeks before and after?
+_Approach Taken_
+-	This query follows the same methodology, only `week_number` have been adjusted to 12 weeks
+
+````sql
+WITH weeklysales AS (
+    SELECT 
+        week_number,
+        SUM(CASE WHEN week_number BETWEEN 13 AND 24 THEN sales ELSE 0 END) AS sales_before,
+        SUM(CASE WHEN week_number BETWEEN 25 AND 37 THEN sales ELSE 0 END) AS sales_after
+    FROM data_mart.clean_weekly_sales
+    WHERE calendar_year = 2020 AND week_number BETWEEN 13 AND 37
+    GROUP BY week_number
+)
+SELECT 
+    SUM(sales_after) - SUM(sales_before) AS sales_variance,
+    ROUND(100 * (SUM(sales_after) - SUM(sales_before)) / SUM(sales_before), 2) AS variance_percentage
+FROM weeklysales	
+````
+![image](https://github.com/user-attachments/assets/3d37728f-4d21-4c85-906f-28f9b2db4538)
+
+
+### 3. How do the sale metrics for these 2 periods before and after compare with the previous years in 2018 and 2019?
+_Approach Taken_
+-	For calculating 4 weeks before and after sales period, I just changed the years in the sql script to 2019 and 2018 from query 1 and got the below output:
+
+	|calendar_year|sales_variance|variance_percentage|
+	|:----|:----|:----|
+	|2018|4102105|0.19|
+	|2019|2336594|0.10|
+	|2020|-26884188|-1.15|
+
+
+-	For calculating 12 weeks before and after sales period, I changed the years in the sql script to 2019 and 2018 from query 2 and got the below output:
+	|calendar_year|sales_variance|variance_percentage|
+	|:----|:----|:----|
+	|2018|104256193|1.63|
+	|2019|-20740294|-0.30|
+	|2020|-152325394|-2.14|
+
+In both the cases, year 2020 witnessed the maximum fall in sales variance as compared to year 2019 and 2018 which witnessed the best sales among the three measured years
+
+## D. Bonus Question
+### Which areas of the business have the highest negative impact in sales metrics performance in 2020 for the 12 week before and after period?
+-	region
+  	````sql
+   	WITH weeklysales AS (
+   		SELECT region,
+		        week_number,
+		        SUM(CASE WHEN week_number BETWEEN 13 AND 24 THEN sales ELSE 0 END) AS sales_before,
+		        SUM(CASE WHEN week_number BETWEEN 25 AND 37 THEN sales ELSE 0 END) AS sales_after
+	    	FROM data_mart.clean_weekly_sales
+	    	WHERE calendar_year = 2020 AND week_number BETWEEN 13 AND 37
+	    	GROUP BY week_number, region
+		)
+	SELECT region,
+		SUM(sales_after) - SUM(sales_before) AS sales_variance,
+	    	ROUND(100 * (SUM(sales_after) - SUM(sales_before)) / SUM(sales_before), 2) AS variance_percentage
+	FROM weeklysales
+	GROUP BY region
+	ORDER BY variance_percentage
+ 	````
+ ![image](https://github.com/user-attachments/assets/c1026302-a77b-4647-899b-5b31beeae80c)
+
+ Asia witnessed the maximum drop in the sales variation with -3.26%, while Europe saw the maximum positive sales variation of 4.73%
+ 
+-	platform
+  	````sql
+		WITH weeklysales AS (
+   			SELECT platform,
+		        week_number,
+		        SUM(CASE WHEN week_number BETWEEN 13 AND 24 THEN sales ELSE 0 END) AS sales_before,
+		        SUM(CASE WHEN week_number BETWEEN 25 AND 37 THEN sales ELSE 0 END) AS sales_after
+	    	FROM data_mart.clean_weekly_sales
+	    	WHERE calendar_year = 2020 AND week_number BETWEEN 13 AND 37
+	    	GROUP BY week_number, platform
+		)
+	SELECT platform,
+		SUM(sales_after) - SUM(sales_before) AS sales_variance,
+	    	ROUND(100 * (SUM(sales_after) - SUM(sales_before)) / SUM(sales_before), 2) AS variance_percentage
+	FROM weeklysales
+	GROUP BY platform
+	ORDER BY variance_percentage
+   	````
+   ![image](https://github.com/user-attachments/assets/1999c527-7d16-467a-9ca1-a48fe7c60dc1)
+   
+   While retail witnessed a clear drop in sales variation, a big jump was seen in sales through shopify 
+   
+-	age_band
+  	````sql
+		WITH weeklysales AS (
+   			SELECT age_band,
+		        week_number,
+		        SUM(CASE WHEN week_number BETWEEN 13 AND 24 THEN sales ELSE 0 END) AS sales_before,
+		        SUM(CASE WHEN week_number BETWEEN 25 AND 37 THEN sales ELSE 0 END) AS sales_after
+	    	FROM data_mart.clean_weekly_sales
+	    	WHERE calendar_year = 2020 AND week_number BETWEEN 13 AND 37
+	    	GROUP BY week_number, age_band
+		)
+	SELECT age_band,
+		SUM(sales_after) - SUM(sales_before) AS sales_variance,
+	    	ROUND(100 * (SUM(sales_after) - SUM(sales_before)) / SUM(sales_before), 2) AS variance_percentage
+	FROM weeklysales
+	GROUP BY age_band
+	ORDER BY variance_percentage
+   	````
+   ![image](https://github.com/user-attachments/assets/ed66b6bb-4ddb-4fb0-b0e7-4122de9f13db)
+
+-	demographic
+	````sql
+		WITH weeklysales AS (
+   			SELECT demographic,
+		        week_number,
+		        SUM(CASE WHEN week_number BETWEEN 13 AND 24 THEN sales ELSE 0 END) AS sales_before,
+		        SUM(CASE WHEN week_number BETWEEN 25 AND 37 THEN sales ELSE 0 END) AS sales_after
+	    	FROM data_mart.clean_weekly_sales
+	    	WHERE calendar_year = 2020 AND week_number BETWEEN 13 AND 37
+	    	GROUP BY week_number, demographic
+		)
+	SELECT demographic,
+		SUM(sales_after) - SUM(sales_before) AS sales_variance,
+	    	ROUND(100 * (SUM(sales_after) - SUM(sales_before)) / SUM(sales_before), 2) AS variance_percentage
+	FROM weeklysales
+	GROUP BY demographic
+	ORDER BY variance_percentage
+ 	````
+	![image](https://github.com/user-attachments/assets/4bd2a338-8d67-4af4-9788-9e219eeff58c)
+
+ 
 ***
 # Learnings
 -	`To_DATE` converts text onto a valid date object
