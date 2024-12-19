@@ -40,7 +40,7 @@ Each record in the dataset is related to a specific aggregated slice of the unde
 ## A. Data Cleansing Steps
 In a single query, perform the following operations and generate a new table in the `data_mart` schema named `clean_weekly_sales`:
 -  Convert the `week_date` to a `DATE` format
--  Add a `week_numbe`r as the second column for each `week_date` value, for example any value from the 1st of January to 7th of January will be 1, 8th to 14th will be 2 etc
+-  Add a `week_number` as the second column for each `week_date` value, for example any value from the 1st of January to 7th of January will be 1, 8th to 14th will be 2 etc
 -  Add a `month_number` with the calendar month for each `week_date` value as the 3rd column
 -  Add a `calendar_year` 
 olumn as the 4th column containing either 2018, 2019 or 2020 values
@@ -96,7 +96,7 @@ GROUP BY
 
 ### 1. What day of the week is used for each week_date value?
 _Approach Taken_
--	Use `DISTINCT` and `TO_CHAR` functios to get the day of the week
+-	Use `DISTINCT` and `TO_CHAR` functions to get the day of the week
 
 ````sql
 SELECT DISTINCT(TO_CHAR(week_date, 'day')) AS week_day 
@@ -105,7 +105,7 @@ FROM clean_weekly_sales
 
 ### 2.What range of week numbers are missing from the dataset?
 _Approach Taken_
--	CTE 'week_number_cte`, use `GENERATE_SERIES` function to generate `week_number` from 1 to 52
+-	CTE `week_number_cte`, use `GENERATE_SERIES` function to generate `week_number` from 1 to 52
 -	`LEFT JOIN` the CTE with `clean_weekly_sales` table to get the missing numbers
 
 ````sql
@@ -121,7 +121,7 @@ WHERE cws.week_number IS NULL
 
 ### 3. How many total transactions were there for each year in the dataset?
 _Approach Taken_
--	Use `SUM` to calculate the toal transactions and `GROUP BY` for grouping them with the years
+-	Use `SUM` to calculate the total transactions and `GROUP BY` for grouping them with the years
 
 ````sql
 SELECT calendar_year,
