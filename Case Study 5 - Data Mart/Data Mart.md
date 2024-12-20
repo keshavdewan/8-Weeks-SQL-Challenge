@@ -13,7 +13,7 @@ For this task we will have to analyse the sales performance and also quantify th
 
 # Table of content
 The case study has been divided into the following parts:
--  [ERD Diagram](#erd-diagram)
+-  [Entity Relation Diagram](#entity-relation-diagram)
 -	[Case Study Questions with Solutions](#case-study-questions-with-solutions)
 	-	[A. Data Cleansing Steps](#a-data-cleansing-steps)
    	- [B. Data Exploration](#b-data-exploration)
@@ -21,7 +21,7 @@ The case study has been divided into the following parts:
     - [D. Bonus Question](#d-bonus-question)
 -  [Learnings](#learnings)
 ***
-# ERD Diagram
+# Entity Relation Diagram
 ![image](https://github.com/user-attachments/assets/16f07e30-8a80-48c0-9209-1055776b6488)
 
 For this case study there is only one table `data_mart.weekly_sales`. The columns in the table are defined as follows:
