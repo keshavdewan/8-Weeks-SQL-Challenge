@@ -6,7 +6,7 @@ In this case study - we will be required to support Danny’s vision and analyse
 
 <img src = "https://github.com/user-attachments/assets/33df4d09-be8b-48f2-9e46-8bdbbbd38625" alt = "Image" width = "500" height = "520">
 
-# Table of Content
+# Table of Contents 
 The case study has been divided into the following parts:
 -  [Entity Relation Diagram](#entity-relation-diagram)
 -  [Case Study Questions with Solutions](#case-study-questions-with-solutions)
@@ -41,3 +41,47 @@ The database consists of 5 Tables:
 ***
 # Case Study Questions with Solutions
 ## A. Digital Analysis
+
+### 1. How many users are there?
+_Approach Taken_
+-    used `COUNT(DISTINCT)` function for calculating the numbers from `user_id`
+
+````sql
+SELECT COUNT(DISTINCT user_id)
+FROM clique_bait.users
+````
+![image](https://github.com/user-attachments/assets/442829ec-aaa4-40e1-8584-d0b37893008b)
+
+### 2. How many cookies does each user have on average?
+_Approach Taken_
+-  CTE `cookie_count` counts the number of cookies for each user
+-  Final `SELECT` statement calculates the average of this count
+
+````sql
+WITH cookie_count AS(
+		SELECT user_id,
+				COUNT(cookie_id) AS cookie_id_count
+		FROM clique_bait.users
+		GROUP BY user_id
+		)
+SELECT ROUND(AVG(cookie_id_count),0) AS avg_user_cookies
+FROM cookie_count
+````
+![image](https://github.com/user-attachments/assets/4b47ee0e-afc9-4331-946f-247b7e1172d1)
+
+### 3. What is the unique number of visits by all users per month?
+_Approach Taken_
+-    Used `EXTRACT` to get the months and `DISTINCT` to count the visits
+
+````sql
+SELECT 	EXTRACT(MONTH FROM event_time) AS month,
+		COUNT(DISTINCT visit_id) AS unique_visits 
+FROM clique_bait.events
+GROUP BY month
+````
+
+![image](https://github.com/user-attachments/assets/e80d727f-71ed-4132-ba46-6d26c0da9402)
+
+### 4. What is the number of events for each event type?
+
+
