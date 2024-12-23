@@ -120,8 +120,9 @@ GROUP BY tv.total_visits
 
 ### 6. What is the percentage of visits which view the checkout page but do not have a purchase event?
 _Approach Taken_
--	CTE `checkout_purchase` covers two `CASE` statements, when `event_type` is `1` (page view) and `page_id = `12` (checkout) and 
-									`event_type` is `3` (purchase) then it would give the `MAX` score
+-	CTE `checkout_purchase` covers two `CASE` statements, when `event_type` is `1` (page view) and `page_id = `12` (checkout) as checkout and 
+									`event_type` is `3` (purchase) as purchase then it would give the `MAX` score
+-	Final `SELECT` statement calculates the percentage of `purchase` to `checkout`
 
 ````sql
 WITH checkout_purchase AS (
@@ -139,3 +140,48 @@ FROM checkout_purchase
 *copy-pasted
 
 ![image](https://github.com/user-attachments/assets/d492c8aa-dff8-4626-9a47-e70f65da1630)
+
+
+### 7. What are the top 3 pages by number of views?
+_Approach Taken_
+-	CTE `top_page` counts the top pages visited
+-	Final `SELECT` statement adds the `page_name` to them
+
+````sql
+WITH top_page AS(
+		SELECT 	page_id,
+		COUNT(event_type) AS page_views
+		FROM clique_bait.events
+		WHERE event_type = 1
+		GROUP BY page_id
+		ORDER BY page_views
+		)
+SELECT tp.page_id,
+		ph.page_name,
+		tp.page_views
+FROM top_page tp
+JOIN clique_bait.page_hierarchy ph ON tp.page_id = ph.page_id
+GROUP BY tp.page_id,
+		ph.page_name,
+		tp.page_views
+ORDER BY tp.page_views DESC
+LIMIT 3
+````
+
+![image](https://github.com/user-attachments/assets/ea2bdc5a-3803-48a2-bb39-5ea2683e2a20)
+
+### 8. What is the number of views and cart adds for each product category?
+_Approach Taken_
+-	Use `CASE` Statement to sum the number of instances when `event_type` is `page view` or `add to cart`
+
+````sql
+SELECT ph.product_category,
+	SUM(CASE WHEN e.event_type = 1 THEN 1 ELSE 0 END) AS page_view,
+	SUM(CASE WHEN e.event_type = 2 THEN 1 ELSE 0 END) AS cart_add
+FROM clique_bait.events e
+JOIN clique_bait.page_hierarchy ph ON e.page_id = ph.page_id
+WHERE ph.product_category IS NOT NULL
+GROUP BY ph.product_category
+ORDER BY page_view DESC
+````
+![image](https://github.com/user-attachments/assets/45932499-7c83-4462-be9d-09c359573fa6)
