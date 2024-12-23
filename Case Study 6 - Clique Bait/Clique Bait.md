@@ -83,5 +83,59 @@ GROUP BY month
 ![image](https://github.com/user-attachments/assets/e80d727f-71ed-4132-ba46-6d26c0da9402)
 
 ### 4. What is the number of events for each event type?
+_Approach Taken_
+-    used `COUNT` of `event_type` for the number of events here
 
+````sql
+SELECT 	event_type,
+	COUNT(event_type) AS event_count 
+FROM clique_bait.events
+GROUP BY event_type
+````
+![image](https://github.com/user-attachments/assets/30720b8d-e1f1-4dd0-a7a5-325aa7b7b34f)
 
+### 5. What is the percentage of visits which have a purchase event?
+_Approach Taken_
+-    CTE 'purchasevisits` calcualtes the distinct `visit_id` from `events` table having event as `purchase`
+-    CTE `totalvisits` calculates the total count of distinct visits
+-    Final `SELECT` statement counts the purchase visits giving the number of visits with purchase and divides with total visits to get the percentage
+
+````sql
+WITH purchasevisits AS (
+    SELECT DISTINCT e.visit_id
+    FROM clique_bait.events AS e
+    JOIN clique_bait.event_identifier AS ei ON e.event_type = ei.event_type
+    WHERE ei.event_name = 'Purchase'
+),
+totalvisits AS (
+    SELECT COUNT(DISTINCT visit_id) as total_visits 
+    FROM clique_bait.events
+)
+SELECT 
+    ROUND((100.0 * COUNT(pv.visit_id) / tv.total_visits),2) AS percentage_purchase
+FROM purchasevisits pv, totalvisits tv
+GROUP BY tv.total_visits
+````
+![image](https://github.com/user-attachments/assets/13d03825-c5c9-4b04-b7f6-43700e34035d)
+
+### 6. What is the percentage of visits which view the checkout page but do not have a purchase event?
+_Approach Taken_
+-	CTE `checkout_purchase` covers two `CASE` statements, when `event_type` is `1` (page view) and `page_id = `12` (checkout) and 
+									`event_type` is `3` (purchase) then it would give the `MAX` score
+
+````sql
+WITH checkout_purchase AS (
+SELECT 
+  visit_id,
+  MAX(CASE WHEN event_type = 1 AND page_id = 12 THEN 1 ELSE 0 END) AS checkout,
+  MAX(CASE WHEN event_type = 3 THEN 1 ELSE 0 END) AS purchase
+FROM clique_bait.events
+GROUP BY visit_id)
+
+SELECT 
+  ROUND(100 * (1-(SUM(purchase)::numeric/SUM(checkout))),2) AS percentage_checkout_view_with_no_purchase
+FROM checkout_purchase
+````
+*copy-pasted
+
+![image](https://github.com/user-attachments/assets/d492c8aa-dff8-4626-9a47-e70f65da1630)
