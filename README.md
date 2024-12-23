@@ -15,7 +15,7 @@ Check my medium article [8 Week SQL Challenge](https://medium.com/p/81aba90fd2d0
   - 🥑[Case Study 3 - Foodie-Fi](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%203%20-%20Foodie-Fi/Foodie-Fi.md)
   - 🏛️[Case Study 4 - Data Bank](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%204%20-%20Data%20Bank/Data-Bank.md)
   - 🛒[Case Study 5 - Data Mart](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%205%20-%20Data%20Mart/Data%20Mart.md)
-  - 🎣[Case Study 6 - Clique Bait]()
+  - 🎣[Case Study 6 - Clique Bait](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%206%20-%20Clique%20Bait/Clique%20Bait.md)
   - 👕[Case Study 7 - Balanced Tree Clothing Co.]()
   - 🍊[Case Study 8 - Fresh Segments]()
 
