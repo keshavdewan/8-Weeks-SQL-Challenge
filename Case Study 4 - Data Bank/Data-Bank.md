@@ -15,7 +15,7 @@ There are a few interesting caveats that go with this business model, and this i
 This case study focuses on using data analysis to help Data Bank achieve these goals by calculating key metrics, analyzing growth, and making data-driven decisions.
 
 ## Table of content
--  [ERD Diagram](#erd-diagram)
+-  [Entity Relationship Diagram](#entity-relationship-diagram)
 -  [Case Study Questions with Solutions](#case-study-questions-with-solutions)
 -  [A. Customer Nodes Exploration](#a-customer-nodes-exploration)
 -  [B. Customer Transactions](#b-customer-transactions)
@@ -25,10 +25,9 @@ This case study focuses on using data analysis to help Data Bank achieve these g
 
 ***
 
-### ERD Diagram
+### Entity Relationship Diagram
 The Data Bank team have prepared a data model for this case study as well as a few example rows from the complete dataset below to get you familiar with their tables.
 
-#### Entity Relationship Diagram
 <img src= "https://cdn-images-1.medium.com/max/1100/0*jPsWpBOKuPgsG7wd.png">
 
 The Data Bank contains 3 tables:
