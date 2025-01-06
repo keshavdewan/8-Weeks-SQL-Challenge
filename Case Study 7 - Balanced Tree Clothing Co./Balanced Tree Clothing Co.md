@@ -98,11 +98,68 @@ _Approach Taken_
 
 ````sql
 SELECT pd.product_name,
-		SUM(s.qty) AS total_quantity
+	SUM(s.qty) AS total_quantity
 FROM balanced_tree.product_details pd
 JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
 GROUP BY pd.product_name
 ````
 ![image](https://github.com/user-attachments/assets/a1cb1cb9-ef14-4b01-9c87-d10b1b360112)
+
+#### 2. What is the total generated revenue for all products before discounts?
+_Approach Taken_
+-	calculated product of `SUM` of `qty` and `price` from `sales` table
+
+````sql
+SELECT pd.product_name,
+	SUM(s.qty * s.price) AS total_revenue
+FROM balanced_tree.product_details pd
+JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+GROUP BY pd.product_name
+````
+
+![image](https://github.com/user-attachments/assets/9f26802d-b0e8-4fb3-bf7e-4ac42cb08456)
+
+#### 3. What was the total discount amount for all products?
+_Approach Taken_
+-	multi[plied `discuount` as well to the total revenue
+
+````sql
+SELECT pd.product_name,
+	SUM(s.qty * s.price * s.discount/100) AS total_discount
+FROM balanced_tree.product_details pd
+JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+GROUP BY pd.product_name
+````
+![image](https://github.com/user-attachments/assets/8425e628-3deb-4d75-b8de-5b52adcce278)
+
+### B. Transaction Analysis
+
+#### 1. How many unique transactions were there?
+_Approach Taken_
+-	used `COUNT(DISTINCT)`
+
+````sql
+SELECT COUNT(DISTINCT(txn_id)) AS unique_transaction
+FROM balanced_tree.sales
+````
+![image](https://github.com/user-attachments/assets/bd69c094-db9e-4e64-a29d-b8552c9d6dce)
+
+#### 2. What is the average unique products purchased in each transaction?
+_Approach Taken_
+-	CTE `TransactionProductCounts` counts the distinct transacation ids,
+-	`COUNT(prod_id) OVER (PARTITION BY txn_id)` counts the number of products per transaction using a window function
+-	Final `SELECT` statement calculates the average of product quantity
+
+````sql
+WITH TransactionProductCounts AS (
+    SELECT DISTINCT txn_id, 
+           COUNT(prod_id) OVER (PARTITION BY txn_id) AS product_txn_qty
+    FROM balanced_tree.sales
+)
+SELECT ROUND(AVG(product_txn_qty)) AS avg_products_qty
+FROM TransactionProductCounts
+````
+![image](https://github.com/user-attachments/assets/b09c9023-542f-4bfc-9315-dd3546b7f585)
+
 
 
