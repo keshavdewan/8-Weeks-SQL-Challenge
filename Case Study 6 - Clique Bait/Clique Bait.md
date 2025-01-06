@@ -96,7 +96,7 @@ GROUP BY event_type
 
 ### 5. What is the percentage of visits which have a purchase event?
 _Approach Taken_
--    CTE 'purchasevisits` calcualtes the distinct `visit_id` from `events` table having event as `purchase`
+-    CTE `purchasevisits` calcualtes the distinct `visit_id` from `events` table having event as `purchase`
 -    CTE `totalvisits` calculates the total count of distinct visits
 -    Final `SELECT` statement counts the purchase visits giving the number of visits with purchase and divides with total visits to get the percentage
 
@@ -120,8 +120,8 @@ GROUP BY tv.total_visits
 
 ### 6. What is the percentage of visits which view the checkout page but do not have a purchase event?
 _Approach Taken_
--	CTE `checkout_purchase` covers two `CASE` statements, when `event_type` is `1` (page view) and `page_id = `12` (checkout) as checkout and 
-									`event_type` is `3` (purchase) as purchase then it would give the `MAX` score
+-	CTE `checkout_purchase` covers two `CASE` statements, when `event_type` is `1` (page view) and `page_id = 12` (checkout) as checkout and 
+									`event_type = 3` (purchase) as purchase then it would give the `MAX` score
 -	Final `SELECT` statement calculates the percentage of `purchase` to `checkout`
 
 ````sql
