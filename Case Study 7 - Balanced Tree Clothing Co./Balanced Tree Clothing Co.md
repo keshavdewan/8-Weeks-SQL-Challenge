@@ -161,5 +161,158 @@ FROM TransactionProductCounts
 ````
 ![image](https://github.com/user-attachments/assets/b09c9023-542f-4bfc-9315-dd3546b7f585)
 
+#### 3. What are the 25th, 50th and 75th percentile values for the revenue per transaction?
+_Approach Taken_
+-	CTE `transaction_revenue` calculates the `transaction_revenue` for each transaction
+-	Final `SELECT` statement uses `PERCENTILE_CONT` to calculate 25th, 50th and 75th percentiles of `transaction_revenue`
+
+````sql
+WITH transaction_revenue AS(
+		SELECT txn_id,
+			SUM(price * qty) AS transaction_revenues
+		FROM balanced_tree.sales
+		GROUP BY txn_id
+)
+SELECT 
+	PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY transaction_revenues) AS percentile_25th,
+	PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY transaction_revenues) AS percentile_50th,
+	PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY transaction_revenues) AS percentile_75th
+FROM transaction_revenue
+````
+
+![image](https://github.com/user-attachments/assets/bddccb66-2363-4218-a7c1-8bda92241c75)
+
+#### 4. What is the average discount value per transaction?
+_Approach Taken_
+-	CTE `totaldiscount` calculates the `total_discount` by calculating product of `SUM` of `qty`, `price` and `discount`
+-	Fianl `SELECT` statement calculates the `AVG` of `total_discount`
+
+````sql
+WITH totaldiscount AS(
+		SELECT txn_id,
+			SUM(qty * price * discount/100) AS total_discount
+		FROM balanced_tree.sales
+		GROUP BY txn_id
+)
+
+SELECT  ROUND(AVG(total_discount),2) AS avg_discount
+FROM totaldiscount
+````
+![image](https://github.com/user-attachments/assets/b8f9c436-fbe7-4a62-80f0-1fdf8a18ce07)
+
+#### 5. What is the percentage split of all transactions for members vs non-members?
+_Approach Taken_
+-	CTE `transactions_cte` counts the distinct `txn_id`
+-	Final `SELECT` statement calculates the percentage of `txn_id` for members and non-members	
+
+````sql
+WITH transactions_cte AS (
+  SELECT member,
+    	COUNT(DISTINCT txn_id) AS transactions
+  FROM balanced_tree.sales
+  GROUP BY member
+)
+
+SELECT member,
+  	transactions,	
+	  ROUND(100 * transactions
+	    /(SELECT SUM(transactions) 
+	FROM transactions_cte)) AS percentage
+FROM transactions_cte
+GROUP BY member, transactions
+````
+![image](https://github.com/user-attachments/assets/00fdaf9d-d2b9-4d6d-be59-70bc0a926f16)
+
+#### 6. What is the average revenue for member transactions and non-member transactions?
+_Approach Taken_
+-	CTE `transaction_cte` calculates the `total_revenue`
+-	Final `SELECT` statement rounds the `avg` of the `total_revenue` to calculate the `avg_revenue`
+
+````sql
+WITH transactions_cte AS (
+  SELECT member,
+	 txn_id,
+	SUM(qty * price) AS total_revenue
+FROM balanced_tree.sales
+GROUP BY member,
+	txn_id
+)
+SELECT member,
+	ROUND(AVG(total_revenue),2) AS avg_revenue
+FROM transactions_cte
+GROUP BY member
+````
+![image](https://github.com/user-attachments/assets/186e3742-02b4-4b60-a5d1-cfb1d0c42101)
+
+### C. Product Analysis
+
+#### 1. What are the top 3 products by total revenue before discount?
+_Approach Taken_
+- 	calculate the `SUM` of `qty` *  `price`
 
 
+````sql
+SELECT pd.product_name,
+	SUM(s.qty) * SUM(s.price) AS total_revenue
+FROM balanced_tree.product_details pd
+JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+GROUP BY product_name
+ORDER BY total_revenue DESC
+LIMIT 3
+````
+![image](https://github.com/user-attachments/assets/4e68ff20-2130-4788-bc4d-c277402b77ea)
+
+#### 2. What is the total quantity, revenue and discount for each segment?	
+
+````sql
+SELECT segment_id,
+	segment_name,
+	SUM(s.qty) AS total_qty,
+	SUM(s.price * s.qty) AS total_revenue,
+	SUM((s.price * s.qty) * s.discount/100) AS total_discount
+FROM balanced_tree.product_details pd
+JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+GROUP BY segment_id,
+	segment_name
+ORDER BY total_revenue DESC
+````
+![image](https://github.com/user-attachments/assets/f88a4af3-1081-4dc2-ba72-b57512fc4c5e)
+
+
+#### 3. What is the top selling product for each segment?
+_Approach Taken_
+-	CTE `top_selling` calculates and `Ranks()` the `segment_id` w.r.t `qty`
+-	Final `SELECT` statement `LIMIT` this ranking to 1
+
+````sql
+WITH top_selling AS(
+		SELECT segment_id,
+			segment_name,
+			product_id,
+			product_name,
+			SUM(s.qty) AS total_qty,
+			RANK() OVER(PARTITION BY segment_id 
+					ORDER BY SUM(s.qty) DESC) AS ranking
+		FROM balanced_tree.product_details pd
+		JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+		GROUP BY segment_id,
+		segment_name,
+		product_id,
+		product_name
+				
+)
+SELECT segment_id,
+	segment_name,
+	product_id,
+	product_name,
+	total_qty
+FROM top_selling
+WHERE ranking = 1
+GROUP BY segment_id,
+	segment_name,
+	product_id,
+	product_name,
+	total_qty
+````
+
+![image](https://github.com/user-attachments/assets/ea8a6d83-6cd6-46a3-96c2-2ce5d1d05f23)
