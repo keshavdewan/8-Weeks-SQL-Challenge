@@ -121,7 +121,7 @@ GROUP BY pd.product_name
 
 #### 3. What was the total discount amount for all products?
 _Approach Taken_
--	multi[plied `discuount` as well to the total revenue
+-	multiplied `discuount` as well to the total revenue
 
 ````sql
 SELECT pd.product_name,
@@ -316,3 +316,156 @@ GROUP BY segment_id,
 ````
 
 ![image](https://github.com/user-attachments/assets/ea8a6d83-6cd6-46a3-96c2-2ce5d1d05f23)
+
+#### 4. What is the total quantity, revenue and discount for each category?
+
+````sql
+SELECT pd.category_id,
+	pd.category_name,
+	SUM(s.qty) AS total_qty,
+	SUM(s.qty * s.price) AS total_revenue,
+	SUM((s.qty * s.price) * s.discount/100) AS total_discount
+FROM balanced_tree.product_details pd
+JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+GROUP BY pd.category_id,
+	pd.category_name
+````
+
+![image](https://github.com/user-attachments/assets/42e44902-79d9-41b6-adb7-5860309d2575)
+
+#### 5. What is the top selling product for each category?
+_Approach Taken_
+-	CTE `top_selling`  calculates `SUM` of `qty` as `total_qty`
+-	Final `SELECT` statement filters with ranking to 1
+
+````sql
+WITH top_selling AS(
+		SELECT pd.category_id,
+			pd.category_name,
+			pd.product_name,
+			SUM(s.qty) AS total_qty,
+			RANK() OVER(PARTITION BY pd.category_id
+					ORDER BY SUM(s.qty) DESC) AS ranking
+FROM balanced_tree.product_details pd
+JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+GROUP BY pd.category_id,
+	pd.category_name,
+	pd.product_name
+)
+
+SELECT category_id,
+	category_name,
+	product_name,
+	total_qty
+FROM top_selling
+WHERE ranking = 1
+GROUP BY category_id,
+	category_name,
+	product_name,
+	total_qty
+````
+
+![image](https://github.com/user-attachments/assets/07568a6d-4b04-4d10-9e1d-8723f7141a73)
+
+#### 6. What is the percentage split of revenue by product for each segment?
+_Approach Taken_
+-	CTE `product_revenue` calculates the `total_revenue`
+-	Final `SELECT` statement calculates the percentage of revenue `percent_revenue` contributed by each product within its segment
+-	The `SUM(total_revenue) OVER (PARTITION BY segment_name)` part uses a window function to calculate the total revenue for each segment.
+
+````sql
+WITH product_revenue AS(
+		SELECT segment_id,
+			segment_name,
+			product_name,
+			SUM(s.qty * s.price) AS total_revenue
+		FROM balanced_tree.product_details pd
+		JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+		GROUP BY segment_id,
+			segment_name,
+			product_name				
+)
+SELECT segment_name,
+	product_name,
+	ROUND(100.0 * total_revenue/SUM(total_revenue) 
+			OVER (PARTITION BY segment_name),1) AS percent_revenue
+FROM product_revenue
+ORDER BY total_revenue DESC
+````
+![image](https://github.com/user-attachments/assets/c3e5c2c9-d4cf-4c19-881d-aae48a52bc7d)
+
+
+#### 7. What is the percentage split of revenue by segment for each category?
+
+````sql
+WITH product_revenue AS(
+		SELECT 	segment_name,
+			category_name,
+			SUM(s.qty * s.price) AS total_revenue
+		FROM balanced_tree.product_details pd
+		JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+		GROUP BY segment_name,
+				category_name
+)
+SELECT segment_name,
+		category_name,
+		ROUND(100.0 * total_revenue/SUM(total_revenue) 
+				OVER (PARTITION BY category_name),1) AS percent_revenue
+FROM product_revenue
+GROUP BY segment_name,
+	category_name,
+	total_revenue
+ORDER BY total_revenue DESC
+````
+
+![image](https://github.com/user-attachments/assets/179b2465-be61-4c67-8fdf-8f243947bd75)
+
+#### 8. What is the percentage split of total revenue by category?
+_Approach Taken_
+-	Removed `PARTITION BY category_name`, the `SUM(total_revenue) OVER ()` now calculates the `total_revenue` across all categories, giving the correct percentage split for each category
+
+````sql
+WITH product_revenue AS(
+		SELECT 	category_name,
+			SUM(s.qty * s.price) AS total_revenue
+		FROM balanced_tree.product_details pd
+		JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+		GROUP BY category_name
+)
+SELECT 	category_name,
+	ROUND(100.0 * total_revenue/SUM(total_revenue) OVER (), 1) AS percent_revenue 
+FROM product_revenue
+GROUP BY category_name,
+		total_revenue
+ORDER BY total_revenue DESC
+````
+
+![image](https://github.com/user-attachments/assets/a337bfe7-2127-43cb-b465-ca79e0ae6529)
+
+#### 9. What is the total transaction “penetration” for each product? (hint: penetration = number of transactions where at least 1 quantity of a product was purchased divided by total number of transactions)
+_Approach Taken_
+-	CTE `transaction_cte` counts the distinct `txn_id` for different `product_name`
+-	CTE `total_transactions_cte` counts the `total_transactions`
+-	Final `SELECT` statement calculates the `percent_penetration` and uses `CROSS JOIN` for joining the CTE to get `total_transaction`
+
+````sql
+WITH transaction_cte AS (
+    SELECT product_name,
+	   COUNT(DISTINCT s.txn_id) AS product_transactions 
+    FROM balanced_tree.product_details pd
+    JOIN balanced_tree.sales s ON pd.product_id = s.prod_id
+    GROUP BY product_name
+),
+total_transactions_cte AS (  
+    SELECT COUNT(DISTINCT txn_id) AS total_transactions
+    FROM balanced_tree.sales
+)
+SELECT 
+    product_name,
+    ROUND(100.0 * product_transactions / total_transactions, 2) AS percent_penetration
+FROM transaction_cte
+CROSS JOIN total_transactions_cte
+ORDER BY percent_penetration DESC
+````
+
+![image](https://github.com/user-attachments/assets/0b384946-8958-43e2-a4aa-4a1be99bb765)
