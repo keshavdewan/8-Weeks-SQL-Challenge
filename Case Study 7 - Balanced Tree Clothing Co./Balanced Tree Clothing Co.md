@@ -11,8 +11,6 @@ Danny, the CEO of this trendy fashion company has asked you to assist the teamâ€
     -  [A. High Level Sales Analysis](#a-high-level-sales-analysis)
     -  [B. Transaction Analysis](#b-transaction-analysis)
     -  [C. Product Analysis](#c-product-analysis)
-    -  [D. Reporting Challenge](#d-reporting-challenge)
-    -  [E. Bonus Challenge](#e-bonus-challenge)
   -  [Learnings](#learnings)
 
 ***
@@ -469,3 +467,7 @@ ORDER BY percent_penetration DESC
 ````
 
 ![image](https://github.com/user-attachments/assets/0b384946-8958-43e2-a4aa-4a1be99bb765)
+
+***
+
+## Learnings
