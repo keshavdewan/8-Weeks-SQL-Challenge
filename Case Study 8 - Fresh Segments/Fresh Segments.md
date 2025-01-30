@@ -44,4 +44,11 @@ Data can be extracted from [DB Fiddle](https://www.db-fiddle.com/f/iRdsT76vaus81
 ### A. Data Exploration and Cleansing
 
 #### 1. Update the `fresh_segments.interest_metrics` table by modifying the `month_year` column to be a date data type with the start of the month
+_Approach taken_
+-    Use of `ALTER` syntax to make changes to the column and table
+-    Use `to_date` function to convert to DATE function and use 'MM-YYYY' format
 
+````sql
+ALTER TABLE fresh_segments.interest_metrics
+ALTER COLUMN month_year TYPE DATE USING to_date(month_year, 'MM-YYYY')
+````
