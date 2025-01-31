@@ -105,3 +105,52 @@ FULL OUTER JOIN fresh_segments.interest_map ON
 ````
 
 ![image](https://github.com/user-attachments/assets/bf61ce4f-8065-4d51-865d-70b0dac16d2d)
+
+
+#### 5. Summarise the `id` values in the `fresh_segments.interest_map` by its total record count in this table
+
+````sql
+SELECT COUNT(interest_map.id) AS map_id
+FROM fresh_segments.interest_map
+````
+
+![image](https://github.com/user-attachments/assets/0d0e227d-7292-4d0e-a53a-7a47028820ea)
+
+#### 6. What sort of table join should we perform for our analysis and why? Check your logic by checking the rows where `interest_id = 21246` in your joined output and include all columns from `fresh_segments.interest_metrics` and all columns from `fresh_segments.interest_map` except from the `id` column.
+_Approach taken_
+- We will be using 'LEFT JOIN` for our approach, this ensures that query will return all columns from `fresh_segments.interest_metrics` and all columns from `fresh_segments.interest_map` (except for the id column) for the specified `interest_id`
+- Manually selected all the columns except `id` column
+
+````sql
+SELECT  interest_metrics.*,
+	interest_map.interest_name,
+    	interest_map.interest_summary,
+    	interest_map.created_at,
+    	interest_map.last_modified
+FROM fresh_segments.interest_metrics
+LEFT JOIN fresh_segments.interest_map ON interest_metrics.interest_id::integer = interest_map.id
+WHERE interest_metrics.interest_id = '21246'
+AND interest_metrics._month IS NOT NULL
+````
+
+![image](https://github.com/user-attachments/assets/f9182bcb-2d00-4d54-b305-27a6f550457e)
+
+#### 7. Are there any records in your joined table where the `month_year` value is before the `created_at` value from the `fresh_segments.interest_map` table? Do you think these values are valid and why?
+_Approach taken_
+-	used the `COUNT` and `WHERE` command to calculate the number of days where `month_year` value is before the `created_at` and found out that there are `188` such instances
+-	After diving deeper we figured out that both these columns have the same month, so we can consider to keep these records
+
+
+````sql
+SELECT  COUNT(*)
+FROM fresh_segments.interest_metrics
+LEFT JOIN fresh_segments.interest_map ON 
+					interest_metrics.interest_id::integer = interest_map.id
+WHERE interest_metrics.month_year < interest_map.created_at
+````
+
+![image](https://github.com/user-attachments/assets/ee8b9909-4a6f-4c18-8d3e-debd938ce409)
+
+### B. Interest Analysis
+
+#### 1. Which interests have been present in all month_year dates in our dataset?
