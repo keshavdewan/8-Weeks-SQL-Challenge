@@ -153,4 +153,58 @@ WHERE interest_metrics.month_year < interest_map.created_at
 
 ### B. Interest Analysis
 
-#### 1. Which interests have been present in all month_year dates in our dataset?
+#### 1. Which interests have been present in all `month_year` dates in our dataset?
+_Approach taken_
+-	CTE `monthly_count` counts the distinct number of `month_year`
+-	Final `SELECT` statement counts the distinct `interest_id` every month
+
+````sql
+WITH monthly_count AS(
+		SELECT 	interest_id,
+			COUNT(DISTINCT month_year) AS month_count
+		FROM fresh_segments.interest_metrics
+		WHERE interest_id IS NOT NULL
+		GROUP BY interest_id
+)
+SELECT month_count,
+	COUNT(DISTINCT interest_id) AS num_interest
+FROM monthly_count
+GROUP BY month_count
+ORDER BY month_count DESC
+````
+
+![image](https://github.com/user-attachments/assets/08144c4a-05d7-4e2f-a72a-71febb3f3fe3)
+
+#### 2. Using this same `total_months` measure - calculate the cumulative percentage of all records starting at 14 months - which `total_months` value passes the 90% cumulative percentage value?
+_Approach taken_
+-	CTE `monthly_count` counts the `DISTINCT month_year`
+-	CTE `cum_percent` calculates the `cumulative_percentage` using `ORDER BY`
+-	Final `SELECT` statement calculates the `cumulative_percentage` with value more than 90%
+
+````sql
+WITH monthly_count AS(
+		SELECT 	interest_id,
+			COUNT(DISTINCT month_year) AS month_count
+		FROM fresh_segments.interest_metrics
+		WHERE interest_id IS NOT NULL
+		GROUP BY interest_id
+),
+cum_percent AS(
+		SELECT month_count,
+			COUNT(*) AS id_num,
+			ROUND(100 * SUM(COUNT(*)) 
+					OVER(ORDER BY month_count DESC)/
+						SUM(COUNT(*)) OVER(),2
+				) AS cumulative_percentage
+FROM monthly_count
+GROUP BY month_count
+ORDER BY month_count DESC
+)
+SELECT month_count,
+	id_num,
+	cumulative_percentage
+FROM cum_percent
+WHERE cumulative_percentage >= 90
+````
+
+![image](https://github.com/user-attachments/assets/849a07a5-1e77-4941-aeea-b2d744e5cd1a)
