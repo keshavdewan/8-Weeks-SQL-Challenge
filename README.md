@@ -17,7 +17,7 @@ Check my medium article [8 Week SQL Challenge](https://medium.com/p/81aba90fd2d0
   - 🛒[Case Study 5 - Data Mart](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%205%20-%20Data%20Mart/Data%20Mart.md)
   - 🎣[Case Study 6 - Clique Bait](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%206%20-%20Clique%20Bait/Clique%20Bait.md)
   - 👕[Case Study 7 - Balanced Tree Clothing Co.](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%207%20-%20Balanced%20Tree%20Clothing%20Co./Balanced%20Tree%20Clothing%20Co.md)
-  - 🍊[Case Study 8 - Fresh Segments](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%208%20-%20Fresh%20Segments/Fresh%20Segments.md)
+  - 🍊[Case Study 8 - Fresh Segments](https://github.com/keshavdewan/8-Weeks-SQL-Challenge/blob/main/Case%20Study%208%20-%20Fresh%20Segments/Fresh%20Segments.md) - incomplete
 
   - # Learnings
     Common Table Expressions (CTEs), Subqueries, Ranking, Datetime formatting, NULLs, Type conversions, Text manipulation, Case Statements,Running sums and conditional aggregations, Median and Percentile
