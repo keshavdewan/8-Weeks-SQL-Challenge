@@ -16,9 +16,7 @@ Analyse aggregated metrics for an example client and provide some high level ins
 -  [Case Study Questions with Solutions](#case-study-questions-with-solutions)
     -  [A. Data Exploration and Cleansing](#a-data-exploration-and-cleansing)
     -  [B. Interest Analysis](#b-interest-analysis)
-    -  [C. Segment Analysis](#c-segment-analysis)
-    -  [D. Index Analysis](#d-index-analysis)
-  -  [Learnings](#learnings)
+
 
 ***
 
@@ -208,3 +206,26 @@ WHERE cumulative_percentage >= 90
 ````
 
 ![image](https://github.com/user-attachments/assets/849a07a5-1e77-4941-aeea-b2d744e5cd1a)
+
+#### 3. If we were to remove all `interest_id` values which are lower than the `total_months` value we found in the previous question - how many total data points would we be removing?
+_Approach taken_
+-	CTE `previous` selects and counts number of distinct values of `interest_id`
+-	Final `SELECT` statement counts the points to be removed
+
+
+````sql
+WITH previous AS (
+		 SELECT interest_id, 
+		  COUNT(DISTINCT month_year)
+		 FROM fresh_segments.interest_metrics
+		 GROUP BY interest_id
+		 HAVING COUNT(DISTINCT month_year) < 6
+		)
+SELECT COUNT(interest_id) AS point_to_be_removed
+FROM fresh_segments.interest_metrics
+WHERE interest_id IN (SELECT interest_id FROM previous)
+````
+
+![image](https://github.com/user-attachments/assets/e66887f0-bd0e-4ba2-b734-8cd58cac5acd)
+
+
